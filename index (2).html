@@ -3969,8 +3969,6 @@ body::before, body::after {
 }
 </style>
 
-<!-- ══ Supabase JS SDK (Auth) ══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 </head>
 <body>
 
@@ -4174,6 +4172,224 @@ body::before, body::after {
 
 
 <!-- ══════════════════════════════════════════
+     🔐 SUPABASE AUTH SCREEN (Email / Password / Local Profile)
+══════════════════════════════════════════ -->
+<div id="hkAuthScreen" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.82);backdrop-filter:blur(14px);align-items:center;justify-content:center;transition:opacity .4s;opacity:0">
+  <div style="background:#111827;border-radius:24px;padding:30px 28px 24px;max-width:440px;width:calc(100% - 24px);border:1.5px solid rgba(59,130,246,0.22);box-shadow:0 28px 90px rgba(0,0,0,0.75);position:relative;max-height:92vh;overflow-y:auto">
+
+    <!-- Logo -->
+    <div style="text-align:center;margin-bottom:20px">
+      <div style="font-size:30px;margin-bottom:2px">ح</div>
+      <div style="font-size:19px;font-weight:800;color:#e8edf5">Hisab<span style="color:#3b82f6">Kitab</span></div>
+      <div style="font-size:11px;color:#4b6080;margin-top:2px">حساب کتاب — Smart Finance for Pakistan</div>
+    </div>
+
+    <!-- Tabs -->
+    <div style="display:flex;border-bottom:1px solid rgba(255,255,255,0.07);margin-bottom:18px;gap:0">
+      <button id="hkTab_local"   onclick="hkAuthShowTab('local')"
+        style="flex:1;padding:9px 2px;font-size:11px;font-weight:700;background:none;border:none;color:#3b82f6;border-bottom:2px solid #3b82f6;cursor:pointer;letter-spacing:.4px;transition:all .2s">
+        📱 Local
+      </button>
+      <button id="hkTab_signin"  onclick="hkAuthShowTab('signin')"
+        style="flex:1;padding:9px 2px;font-size:11px;font-weight:700;background:none;border:none;color:rgba(255,255,255,0.35);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:.4px;transition:all .2s">
+        ☁ Sign In
+      </button>
+      <button id="hkTab_signup"  onclick="hkAuthShowTab('signup')"
+        style="flex:1;padding:9px 2px;font-size:11px;font-weight:700;background:none;border:none;color:rgba(255,255,255,0.35);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:.4px;transition:all .2s">
+        ☁ Register
+      </button>
+      <button id="hkTab_recover" onclick="hkAuthShowTab('recover')"
+        style="flex:1;padding:9px 2px;font-size:11px;font-weight:700;background:none;border:none;color:rgba(255,255,255,0.35);border-bottom:2px solid transparent;cursor:pointer;letter-spacing:.4px;transition:all .2s">
+        Reset Pwd
+      </button>
+    </div>
+
+    <!-- ── SIGN IN ── -->
+    <div id="hkPanel_signin" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="hkSiEmail" type="email" placeholder="Email address" autocomplete="email"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')document.getElementById('hkSiPass').focus()">
+        <div style="position:relative">
+          <input id="hkSiPass" type="password" placeholder="Password" autocomplete="current-password"
+            style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')hkAuthDoSignIn()">
+          <button type="button" onclick="hkTogglePass('hkSiPass',this)"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0;line-height:1">👁</button>
+        </div>
+        <button id="hkSiBtn" onclick="hkAuthDoSignIn()"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px">
+          Sign In →
+        </button>
+      </div>
+      <div id="hkSiMsg" style="margin-top:9px;font-size:12px;min-height:16px;text-align:center;line-height:1.5"></div>
+      <div id="hkSiFallback" style="display:none;margin-top:10px">
+        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">— or sign in without internet —</div>
+        <button onclick="hkAuthShowTab('local')"
+          style="width:100%;padding:11px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+          📱 Use Local Profile →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── SIGN UP ── -->
+    <div id="hkPanel_signup" style="display:none">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="hkSuName" type="text" placeholder="Your display name" maxlength="40"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')document.getElementById('hkSuEmail').focus()">
+        <input id="hkSuEmail" type="email" placeholder="Email address" autocomplete="email"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')document.getElementById('hkSuPass').focus()">
+        <div style="position:relative">
+          <input id="hkSuPass" type="password" placeholder="Password (min 6 chars)" autocomplete="new-password"
+            style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')document.getElementById('hkSuPass2').focus()">
+          <button type="button" onclick="hkTogglePass('hkSuPass',this)"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0;line-height:1">👁</button>
+        </div>
+        <div style="position:relative">
+          <input id="hkSuPass2" type="password" placeholder="Confirm password" autocomplete="new-password"
+            style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')hkAuthDoSignUp()">
+          <button type="button" onclick="hkTogglePass('hkSuPass2',this)"
+            style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0;line-height:1">👁</button>
+        </div>
+        <button id="hkSuBtn" onclick="hkAuthDoSignUp()"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px">
+          Create Account →
+        </button>
+      </div>
+      <div id="hkSuMsg" style="margin-top:9px;font-size:12px;min-height:16px;text-align:center;line-height:1.5"></div>
+      <!-- Auto-fallback button shown when Supabase fails -->
+      <div id="hkSuFallback" style="display:none;margin-top:10px">
+        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px">— or skip cloud and use device storage —</div>
+        <button onclick="hkFallbackToLocal()" 
+          style="width:100%;padding:11px;background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+          ✅ Create Local Profile Instead →
+        </button>
+      </div>
+    </div>
+
+    <!-- ── PASSWORD RECOVERY ── -->
+    <div id="hkPanel_recover" style="display:none">
+      <div style="margin-bottom:12px;font-size:12px;color:rgba(255,255,255,0.45);line-height:1.65">
+        Enter your email below. If it's registered, you'll receive a reset link — check your inbox and spam folder.
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <input id="hkRcEmail" type="email" placeholder="Your email address" autocomplete="email"
+          style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')hkAuthDoRecover()">
+        <button id="hkRcBtn" onclick="hkAuthDoRecover()"
+          style="width:100%;padding:12px;background:linear-gradient(135deg,#78350f,#f59e0b);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.3px">
+          Send Reset Link →
+        </button>
+      </div>
+      <div id="hkRcMsg" style="margin-top:9px;font-size:12px;min-height:16px;text-align:center;line-height:1.5"></div>
+    </div>
+
+    <!-- ── LOCAL PROFILE ── -->
+    <div id="hkPanel_local">
+      <div style="margin-bottom:14px;padding:10px 12px;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.2);border-radius:10px;font-size:12px;color:rgba(100,220,170,0.9);line-height:1.6">
+        ✅ <strong>Works offline — no internet required.</strong><br>
+        Your data stays on this device. For cloud backup across devices, use ☁ Sign In / Register (requires Supabase).
+      </div>
+
+      <!-- Toggle: sign in vs create -->
+      <div id="hkLcMode" style="display:flex;gap:0;background:rgba(255,255,255,0.04);border-radius:10px;padding:3px;margin-bottom:14px">
+        <button id="hkLcModeSignIn" onclick="hkLcSwitchMode('signin')"
+          style="flex:1;padding:8px;font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:all .2s;background:#1d4ed8;color:#fff">
+          Sign In
+        </button>
+        <button id="hkLcModeCreate" onclick="hkLcSwitchMode('create')"
+          style="flex:1;padding:8px;font-size:12px;font-weight:700;border:none;border-radius:8px;cursor:pointer;transition:all .2s;background:transparent;color:rgba(255,255,255,0.4)">
+          New Profile
+        </button>
+      </div>
+
+      <!-- SIGN IN to existing profile -->
+      <div id="hkLcSignInForm">
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <select id="hkLcSignInName" onchange="hkLcSignInNameChange()"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:#1a2235;color:#e8edf5;font-size:13px;outline:none;box-sizing:border-box;cursor:pointer">
+            <option value="">— Choose your profile —</option>
+          </select>
+          <div id="hkLcSignInPwRow" style="display:none;position:relative">
+            <input id="hkLcSignInPass" type="password" placeholder="Profile password"
+              style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+              onkeydown="if(event.key==='Enter')hkLocalDoSignIn()">
+            <button type="button" onclick="hkTogglePass('hkLcSignInPass',this)"
+              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0;line-height:1">👁</button>
+          </div>
+          <button onclick="hkLocalDoSignIn()"
+            style="width:100%;padding:12px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+            Enter →
+          </button>
+          <div id="hkLcNoProfiles" style="display:none;text-align:center;padding:10px;font-size:12px;color:rgba(255,255,255,0.4)">
+            No profiles yet. Switch to <strong style="color:#60a5fa;cursor:pointer" onclick="hkLcSwitchMode('create')">New Profile</strong> to create one.
+          </div>
+        </div>
+      </div>
+
+      <!-- CREATE new local profile -->
+      <div id="hkLcCreateForm" style="display:none">
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <input id="hkLcName" type="text" placeholder="Your name (e.g. Hamza, Fatima)" maxlength="40"
+            style="width:100%;padding:11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+            onkeydown="if(event.key==='Enter')document.getElementById('hkLcPass').focus()">
+          <div style="position:relative">
+            <input id="hkLcPass" type="password" placeholder="Set a password (optional)"
+              style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+              onkeydown="if(event.key==='Enter')hkLocalDoCreate()">
+            <button type="button" onclick="hkTogglePass('hkLcPass',this)"
+              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0;line-height:1">👁</button>
+          </div>
+          <button onclick="hkLocalDoCreate()"
+            style="width:100%;padding:12px;background:linear-gradient(135deg,#065f46,#10b981);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+            Create Profile & Enter →
+          </button>
+        </div>
+      </div>
+
+      <div id="hkLcMsg" style="margin-top:9px;font-size:12px;min-height:16px;text-align:center;line-height:1.5"></div>
+    </div>
+
+    <!-- Footer -->
+    <div style="margin-top:18px;text-align:center;font-size:10px;color:rgba(255,255,255,0.15);line-height:1.7">
+      Your data is encrypted locally. Cloud sync via Supabase (optional).<br>We never sell your data.
+    </div>
+  </div>
+</div>
+
+<!-- Password Reset Modal (injected when ?type=recovery hash detected) -->
+<div id="hkResetPwdModal" style="display:none;position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.88);align-items:center;justify-content:center;backdrop-filter:blur(10px)">
+  <div style="background:#111827;border-radius:20px;padding:30px;max-width:400px;width:calc(100%-28px);border:1.5px solid rgba(59,130,246,0.28);box-shadow:0 24px 80px rgba(0,0,0,0.7)">
+    <div style="font-size:18px;font-weight:800;margin-bottom:5px;color:#e8edf5">🔑 Set New Password</div>
+    <div style="font-size:12px;color:#4b6080;margin-bottom:18px">Enter your new password below to complete the reset.</div>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      <div style="position:relative">
+        <input id="hkNewPwd1" type="password" placeholder="New password (min 6 chars)"
+          style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box">
+        <button type="button" onclick="hkTogglePass('hkNewPwd1',this)"
+          style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0">👁</button>
+      </div>
+      <div style="position:relative">
+        <input id="hkNewPwd2" type="password" placeholder="Confirm new password"
+          style="width:100%;padding:11px 40px 11px 14px;border-radius:10px;border:1.5px solid rgba(255,255,255,0.1);background:rgba(255,255,255,0.05);color:#fff;font-size:13px;outline:none;box-sizing:border-box"
+          onkeydown="if(event.key==='Enter')hkDoSetNewPassword()">
+        <button type="button" onclick="hkTogglePass('hkNewPwd2',this)"
+          style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.35);cursor:pointer;font-size:15px;padding:0">👁</button>
+      </div>
+      <button id="hkSetPwdBtn" onclick="hkDoSetNewPassword()"
+        style="width:100%;padding:12px;background:linear-gradient(135deg,#1d4ed8,#3b82f6);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer">
+        Update Password →
+      </button>
+    </div>
+    <div id="hkSetPwdMsg" style="margin-top:9px;font-size:12px;text-align:center;min-height:16px"></div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════
      🔐 PIN LOCK SCREEN
 ══════════════════════════════════════════ -->
 <div id="pinLockScreen" class="pin-gone">
@@ -4204,7 +4420,7 @@ body::before, body::after {
     <div class="pin-actions">
       <span class="pin-link danger" onclick="pinForgot()">Forgot PIN?</span>
     </div>
-    <button id="biometricBtn" class="pin-biometric-btn" onclick="hkBiometricUnlock()" style="display:none!important" title="Use fingerprint or face unlock">
+    <button id="biometricBtn" class="pin-biometric-btn" onclick="hkBiometricUnlock()" style="display:none" title="Use fingerprint or face unlock">
       <span style="font-size:28px">🔑</span>
       <span style="font-size:11px;display:block;margin-top:2px;opacity:0.8">Use Biometric</span>
     </button>
@@ -4285,83 +4501,26 @@ body::before, body::after {
         </div>
       </div>
 
-      <div class="ws-form" id="wsAuthForm">
-
-        <!-- ── Returning user banner (shown when session restored) ── -->
-        <div id="wsReturningMsg" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);border-radius:10px;font-size:13px;color:#93c5fd;">
-          👋 <span class="ws-returning-text">Welcome back! Press "Sign In" to continue.</span>
+      <!-- ═══ WELCOME FORM (shown after auth) ═══ -->
+      <div class="ws-form">
+        <div id="wsReturningMsg" style="display:none;margin-bottom:12px;padding:10px 14px;background:rgba(59,130,246,0.12);border:1px solid rgba(59,130,246,0.25);border-radius:10px;font-size:13px;color:#93c5fd;">
+          👋 <span class="ws-returning-text">Welcome back! Just press Enter to jump back in.</span>
         </div>
-
-        <!-- ── Tab switcher ── -->
-        <div id="wsAuthTabs" style="display:flex;gap:0;margin-bottom:18px;background:rgba(255,255,255,0.06);border-radius:12px;padding:4px;">
-          <button id="wsTabSignIn" onclick="hkAuthShowTab('signin')"
-            style="flex:1;padding:9px 0;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:rgba(26,200,100,0.22);color:#4ade80;">
-            🔑 Sign In
-          </button>
-          <button id="wsTabSignUp" onclick="hkAuthShowTab('signup')"
-            style="flex:1;padding:9px 0;border:none;border-radius:9px;font-size:13px;font-weight:700;cursor:pointer;transition:all .18s;background:transparent;color:rgba(255,255,255,0.45);">
-            ✨ Create Account
-          </button>
+        <label class="ws-name-label">What should we call you?</label>
+        <div class="ws-name-row">
+          <div class="ws-name-input-wrap">
+            <input class="ws-name-input" id="wsNameInput" type="text" placeholder="Enter your name to continue..." maxlength="40"
+              oninput="toggleWsClear(this)"
+              onkeydown="if(event.key==='Enter') enterDashboard()">
+            <button class="ws-clear-btn" id="wsClearBtn" onclick="clearWsInput()" type="button" title="Clear">✕</button>
+          </div>
+          <button class="ws-enter-btn" onclick="enterDashboard()">Let's Go →</button>
         </div>
-
-        <!-- ── Email field ── -->
-        <div style="margin-bottom:12px;">
-          <label class="ws-name-label" style="font-size:11px;margin-bottom:6px;display:block;">Email Address</label>
-          <input class="ws-name-input" id="wsAuthEmail" type="email" placeholder="your@email.com" autocomplete="email"
-            style="width:100%;"
-            onkeydown="if(event.key==='Enter') hkAuthSubmit()">
-        </div>
-
-        <!-- ── Password field ── -->
-        <div style="margin-bottom:12px;position:relative;">
-          <label class="ws-name-label" style="font-size:11px;margin-bottom:6px;display:block;">Password</label>
-          <div style="position:relative;">
-            <input class="ws-name-input" id="wsAuthPassword" type="password" placeholder="Min. 8 characters" autocomplete="current-password"
-              style="width:100%;padding-right:42px;"
-              onkeydown="if(event.key==='Enter') hkAuthSubmit()">
-            <button onclick="hkAuthTogglePwd('wsAuthPassword',this)" type="button"
-              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.45);cursor:pointer;font-size:15px;line-height:1;">👁</button>
+        <div style="display:flex;gap:10px;margin-top:12px;align-items:center;">
+          <div id="wsSwitchUser" style="display:none;" class="ws-skip" onclick="hkAuthSignOut()" style="margin-top:0;padding:8px 14px;border:1px solid rgba(239,68,68,0.25);border-radius:8px;font-size:12px;color:rgba(239,68,68,0.6);">
+            🔄 Switch / Sign Out
           </div>
         </div>
-
-        <!-- ── Confirm Password (Sign Up only) ── -->
-        <div id="wsAuthConfirmRow" style="margin-bottom:12px;display:none;position:relative;">
-          <label class="ws-name-label" style="font-size:11px;margin-bottom:6px;display:block;">Confirm Password</label>
-          <div style="position:relative;">
-            <input class="ws-name-input" id="wsAuthConfirm" type="password" placeholder="Re-enter password" autocomplete="new-password"
-              style="width:100%;padding-right:42px;"
-              onkeydown="if(event.key==='Enter') hkAuthSubmit()">
-            <button onclick="hkAuthTogglePwd('wsAuthConfirm',this)" type="button"
-              style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:rgba(255,255,255,0.45);cursor:pointer;font-size:15px;line-height:1;">👁</button>
-          </div>
-        </div>
-
-        <!-- ── Display name (Sign Up only) ── -->
-        <div id="wsAuthNameRow" style="margin-bottom:12px;display:none;">
-          <label class="ws-name-label" style="font-size:11px;margin-bottom:6px;display:block;">Your Name (for greetings)</label>
-          <input class="ws-name-input" id="wsAuthName" type="text" placeholder="e.g. Ali, Ayesha…" maxlength="40"
-            style="width:100%;"
-            onkeydown="if(event.key==='Enter') hkAuthSubmit()">
-        </div>
-
-        <!-- ── Error / info message ── -->
-        <div id="wsAuthMsg" style="display:none;margin-bottom:12px;padding:9px 13px;border-radius:9px;font-size:12px;line-height:1.5;"></div>
-
-        <!-- ── Submit button ── -->
-        <button class="ws-enter-btn" id="wsAuthBtn" onclick="hkAuthSubmit()"
-          style="width:100%;margin-bottom:10px;font-size:14px;padding:13px 0;">
-          🔑 Sign In
-        </button>
-
-        <!-- ── Forgot password link ── -->
-        <div id="wsAuthForgotRow" style="text-align:center;">
-          <span onclick="hkAuthForgotPassword()"
-            style="font-size:12px;color:rgba(100,200,160,0.7);cursor:pointer;text-decoration:underline;text-underline-offset:2px;">
-            Forgot password?
-          </span>
-        </div>
-
-        <!-- countdown hidden (removed auto-dismiss) -->
         <div id="wsAutoBar" style="display:none">
           <span id="wsCountdownNum"></span>
           <div id="wsCountdownBar"></div>
@@ -4637,20 +4796,6 @@ body::before, body::after {
     </button>
     <button class="nav-item" onclick="showPage('backup',this)">
       <span class="nav-thumb-svg" data-color="#3b82f6">💾</span><span class="sb-text"> Backup <span style="font-size:10px;opacity:0.65"> بیک اپ</span></span>
-    </button>
-  </div>
-
-  <!-- ── Logged-in user profile strip ── -->
-  <div id="sidebarUserStrip" style="margin-top:auto;padding:12px 16px 6px;border-top:1px solid var(--border);display:none;">
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
-      <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0;" id="sbUserAvatar">?</div>
-      <div style="min-width:0;flex:1;">
-        <div id="sbUserName" style="font-size:12px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
-        <div id="sbUserEmail" style="font-size:10px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">—</div>
-      </div>
-    </div>
-    <button onclick="hkAuthSignOut()" class="nav-item" style="width:100%;color:var(--red);border:1px solid rgba(239,68,68,0.2);justify-content:center;gap:8px;font-size:12px;font-weight:700;padding:7px 10px;">
-      <span>🚪</span><span class="sb-text">Sign Out</span>
     </button>
   </div>
 </nav>
@@ -6673,6 +6818,17 @@ body::before, body::after {
       <span id="overallSecurityBadge" class="security-status-badge inactive">⚠ Not Protected</span>
     </div>
 
+    <!-- Account Info -->
+    <div class="security-row" id="hkAccountRow" style="background:rgba(59,130,246,0.06);border-radius:10px;padding:12px 14px;margin-bottom:12px;border:1px solid rgba(59,130,246,0.15)">
+      <div>
+        <div class="security-row-label" style="color:var(--accent)">👤 Signed In Account</div>
+        <div class="security-row-sub" id="hkAccountEmail" style="margin-top:2px">—</div>
+      </div>
+      <button onclick="hkAuthSignOut()" style="flex-shrink:0;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);color:var(--red,#ef4444);border-radius:8px;padding:7px 14px;font-size:12px;cursor:pointer;font-weight:600;white-space:nowrap">
+        Sign Out
+      </button>
+    </div>
+
     <!-- PIN Lock -->
     <div class="security-row">
       <div>
@@ -6683,6 +6839,18 @@ body::before, body::after {
         <button class="btn btn-sm btn-primary" id="btnSetPin" onclick="openPinSetup('set')" style="display:none">Set PIN</button>
         <button class="btn btn-sm" id="btnChangePin" onclick="openPinSetup('change')" style="display:none;background:rgba(59,130,246,0.15);color:var(--accent);border:1px solid rgba(59,130,246,0.3)">Change</button>
         <button class="btn btn-sm" id="btnRemovePin" onclick="openPinSetup('remove')" style="display:none;background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.3)">Remove</button>
+      </div>
+    </div>
+
+    <!-- Biometric Login -->
+    <div class="security-row" id="biometricRow" style="display:none">
+      <div>
+        <div class="security-row-label">🔑 Biometric Unlock</div>
+        <div class="security-row-sub">Use fingerprint or face ID to unlock the app instead of PIN</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-sm btn-primary" id="btnRegBiometric" onclick="hkBiometricRegister()" style="">Register</button>
+        <button class="btn btn-sm" id="btnRemoveBiometric" onclick="hkBiometricRemove()" style="display:none;background:rgba(239,68,68,0.1);color:var(--red);border:1px solid rgba(239,68,68,0.3)">Remove</button>
       </div>
     </div>
 
@@ -9241,8 +9409,20 @@ function updateSecurityUI() {
     }
   }
 
+  // Account info
+  const sess = JSON.parse(localStorage.getItem('hk_auth_session_v2')||'null');
+  const emailEl = document.getElementById('hkAccountEmail');
+  if (emailEl && sess && sess.user) {
+    if (sess.isLocal) {
+      const nm = (sess.user.user_metadata && (sess.user.user_metadata.full_name || sess.user.user_metadata.name)) || sess.user.id || '—';
+      emailEl.innerHTML = '📱 Local Profile: <strong>' + nm + '</strong> <span style="color:var(--text3);font-size:11px">(device only — no cloud sync)</span>';
+    } else {
+      emailEl.textContent = '☁ ' + (sess.user.email || '—');
+    }
+  }
+
   // Biometric UI
-  const bioReg = !!localStorage.getItem('hk_webauthn_cred');
+  const bioReg = !!(localStorage.getItem(_bioKey()) || localStorage.getItem(_WEBAUTHN_KEY));
   const regBtn = document.getElementById('btnRegBiometric');
   const remBtn = document.getElementById('btnRemoveBiometric');
   const bioRow = document.getElementById('biometricRow');
@@ -9440,10 +9620,16 @@ function fmtShort(n) {
 // ============================================================
 // 🔐 BIOMETRIC AUTH — WebAuthn / Platform Authenticator
 // Uses device fingerprint or face unlock as an alternative to PIN
-// Credential stored in localStorage keyed to this app origin
+// Credential stored per-user in localStorage
 // ============================================================
 
-const _WEBAUTHN_KEY = 'hk_webauthn_cred';
+/* Per-user biometric key */
+function _bioKey(){
+  var uid = window._hkAuthUid || localStorage.getItem('hk_sb_device_uid') || 'default';
+  return 'hk_webauthn_cred_' + uid;
+}
+
+const _WEBAUTHN_KEY = 'hk_webauthn_cred'; /* legacy fallback */
 
 /** Check if platform biometrics are available */
 async function hkBiometricAvailable() {
@@ -9482,11 +9668,12 @@ async function hkBiometricRegister() {
       }
     });
 
-    // Store credential ID for future assertions
+    // Store credential ID per user
     const credId = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
-    localStorage.setItem(_WEBAUTHN_KEY, credId);
+    localStorage.setItem(_bioKey(), credId);
     showToastMsg('✅ Biometric registered! Use fingerprint/face to unlock.', 'success');
     updateSecurityUI();
+    _showBiometricBtnIfAvail();
     return true;
   } catch(e) {
     if (e.name !== 'NotAllowedError') console.warn('[WebAuthn] Register error:', e);
@@ -9497,7 +9684,7 @@ async function hkBiometricRegister() {
 
 /** Verify biometric — unlocks app if successful */
 async function hkBiometricUnlock() {
-  const storedId = localStorage.getItem(_WEBAUTHN_KEY);
+  const storedId = localStorage.getItem(_bioKey()) || localStorage.getItem(_WEBAUTHN_KEY);
   if (!storedId) {
     showToastMsg('⚠️ No biometric registered. Set it up in Settings → Security.', 'info');
     return;
@@ -9540,18 +9727,27 @@ async function hkBiometricUnlock() {
 
 /** Remove biometric registration */
 function hkBiometricRemove() {
-  localStorage.removeItem(_WEBAUTHN_KEY);
+  localStorage.removeItem(_bioKey());
+  localStorage.removeItem(_WEBAUTHN_KEY); /* also remove legacy */
   showToastMsg('🗑 Biometric removed', 'info');
   updateSecurityUI();
+  _showBiometricBtnIfAvail();
 }
 
 /** Show biometric button on PIN screen if credential exists */
 async function _showBiometricBtnIfAvail() {
   const btn = document.getElementById('biometricBtn');
   if (!btn) return;
-  const hasReg = !!localStorage.getItem(_WEBAUTHN_KEY);
+  const hasReg = !!(localStorage.getItem(_bioKey()) || localStorage.getItem(_WEBAUTHN_KEY));
   const avail  = await hkBiometricAvailable();
-  btn.style.display = (hasReg && avail) ? 'flex' : 'none';
+  const shouldShow = hasReg && avail;
+  btn.style.display = shouldShow ? 'flex' : 'none';
+  /* also make flex layout work */
+  if (shouldShow) {
+    btn.style.flexDirection = 'column';
+    btn.style.alignItems = 'center';
+    btn.style.margin = '16px auto 0';
+  }
 }
 
 
@@ -24871,6 +25067,595 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <!-- ═══════════════════════════════════════════════════════════════════
+     HISAB KITAB — SUPABASE AUTH LAYER (Email/Password + Recovery)
+     ▸ Uses Supabase Auth REST API (no SDK)
+     ▸ 8-second timeout with abort controller
+     ▸ Smart error messages (CORS / network / server / credentials)
+     ▸ Local Profile fallback — works with no internet / no Supabase auth
+     ▸ Per-user data isolation  (localStorage keyed by user_id)
+     ▸ Per-user PIN + Biometric (keyed by user_id)
+     ▸ Password recovery via Supabase email link
+═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+'use strict';
+
+/* ── Constants ── */
+var SB_URL  = 'https://aczlqaezfloenmuchuxm.supabase.co';
+var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjemxxYWV6ZmxvZW5tdWNodXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MzI5MjcsImV4cCI6MjA5MzIwODkyN30._Qvq0PlrMZEUWmvwKJZ5ZCS4lzqE5-IOGcAqaU6AuDo';
+var AUTH_SESSION_KEY = 'hk_auth_session_v2';
+var LOCAL_PROFILES_KEY = 'hk_local_profiles_v1';
+
+/* ════════════════════════════════════
+   SESSION HELPERS
+════════════════════════════════════ */
+function _getSession(){ try{ return JSON.parse(localStorage.getItem(AUTH_SESSION_KEY)||'null'); }catch(e){return null;} }
+function _setSession(s){ localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify(s)); }
+function _clearSession(){ localStorage.removeItem(AUTH_SESSION_KEY); }
+
+/* ════════════════════════════════════
+   FETCH WITH TIMEOUT (8s) + smart error classification
+════════════════════════════════════ */
+function _authFetch(endpoint, body){
+  var ctrl = new AbortController();
+  var timer = setTimeout(function(){ ctrl.abort(); }, 8000);
+
+  return fetch(SB_URL + '/auth/v1' + endpoint, {
+    method: 'POST',
+    mode:   'cors',
+    signal: ctrl.signal,
+    headers: {
+      'apikey':       SB_KEY,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  })
+  .then(function(r){
+    clearTimeout(timer);
+    return r.json().then(function(d){ return { ok: r.ok, status: r.status, data: d }; })
+             .catch(function(){      return { ok: r.ok, status: r.status, data: {} }; });
+  })
+  .catch(function(err){
+    clearTimeout(timer);
+    var isAbort   = err && err.name === 'AbortError';
+    var isCors    = err && err.message && (err.message.includes('Failed to fetch') || err.message.includes('NetworkError'));
+    throw { _hkNet: true, isAbort: isAbort, isCors: isCors, err: err };
+  });
+}
+
+function _netErrMsg(e){
+  if(!e || !e._hkNet) return null;
+  if(e.isAbort)  return '⏱ Request timed out. Supabase might be paused — try again or use a Local Profile.';
+  if(e.isCors)   return '🌐 Cannot reach Supabase. Check your internet, or use a Local Profile below.';
+  return '❌ Network error. Check your connection or use a Local Profile below.';
+}
+
+/* ════════════════════════════════════
+   TOKEN REFRESH
+════════════════════════════════════ */
+function _refreshSession(refreshToken){
+  return _authFetch('/token?grant_type=refresh_token', { refresh_token: refreshToken })
+    .then(function(res){
+      if(res.ok && res.data.access_token){
+        var sess = {
+          access_token:  res.data.access_token,
+          refresh_token: res.data.refresh_token || refreshToken,
+          user:          res.data.user || (_getSession()||{}).user,
+          isLocal:       false
+        };
+        _setSession(sess);
+        return sess;
+      }
+      return null;
+    }).catch(function(){ return null; });
+}
+
+/* ════════════════════════════════════
+   PER-USER STATE KEY
+════════════════════════════════════ */
+function _stateKey(uid){ return 'hisabKitabState_' + uid; }
+
+/* ════════════════════════════════════
+   APPLY AUTH USER (sync layer + state)
+════════════════════════════════════ */
+function _applyAuthUser(sess){
+  if(!sess || !sess.user || !sess.user.id) return;
+  var uid = sess.user.id;
+  window._hkAuthUid = uid;
+  localStorage.setItem('hk_sb_device_uid', uid);
+  /* Signal sync layer that auth is ready */
+  if(typeof window._hkSyncAuthReady === 'function') window._hkSyncAuthReady(uid);
+  var userStateRaw = localStorage.getItem(_stateKey(uid));
+  if(userStateRaw){
+    localStorage.setItem('hisabKitabState', userStateRaw);
+  } else {
+    localStorage.removeItem('hisabKitabState');
+  }
+}
+
+/* ════════════════════════════════════
+   STATE SAVE MIRROR (per-user key)
+════════════════════════════════════ */
+function _installStateMirror(uid){
+  if(window._hkMirrorInstalled === uid) return;
+  window._hkMirrorInstalled = uid;
+  var _orig    = window.saveState;
+  var _origNow = window.saveStateNow;
+  function _mirror(){
+    var raw = localStorage.getItem('hisabKitabState');
+    if(raw) localStorage.setItem(_stateKey(uid), raw);
+  }
+  window.saveState = function(){ if(typeof _orig==='function') _orig.apply(this,arguments); setTimeout(_mirror,350); };
+  window.saveStateNow = function(){ if(typeof _origNow==='function') _origNow.apply(this,arguments); _mirror(); };
+  window.addEventListener('beforeunload', _mirror);
+}
+
+/* ════════════════════════════════════
+   ENTER DASHBOARD AFTER AUTH
+════════════════════════════════════ */
+function _enterAfterAuth(sess, displayName){
+  _applyAuthUser(sess);
+  _installStateMirror(sess.user.id);
+  var name = displayName
+    || (sess.user.user_metadata && (sess.user.user_metadata.full_name || sess.user.user_metadata.name))
+    || (sess.user.email||'').split('@')[0]
+    || 'User';
+
+  if(typeof window.loadState === 'function') window.loadState();
+  if(window.state && window.state.settings) window.state.settings.userName = window.state.settings.userName || name;
+  if(typeof window.saveState === 'function') window.saveState();
+
+  /* Set welcome screen name field */
+  var inp = document.getElementById('wsNameInput'); if(inp) inp.value = name;
+  /* Show returning msg */
+  var rm = document.getElementById('wsReturningMsg');
+  if(rm){ rm.style.display='block'; var t=rm.querySelector('.ws-returning-text'); if(t) t.textContent='Welcome back, '+name+'!'; }
+  var sw = document.getElementById('wsSwitchUser'); if(sw) sw.style.display='block';
+
+  hkAuthHideScreen(function(){
+    if(typeof window.enterDashboard === 'function') window.enterDashboard();
+    if(!sess.isLocal){
+      setTimeout(function(){
+        if(typeof window.hkTriggerSync === 'function') window.hkTriggerSync();
+      }, 1500);
+    }
+  });
+}
+
+/* ════════════════════════════════════
+   LOCAL PROFILE SYSTEM (no Supabase auth needed)
+════════════════════════════════════ */
+function _getLocalProfiles(){ try{ return JSON.parse(localStorage.getItem(LOCAL_PROFILES_KEY)||'[]'); }catch(e){return[];} }
+function _saveLocalProfiles(p){ localStorage.setItem(LOCAL_PROFILES_KEY, JSON.stringify(p)); }
+
+function _hashPin(pin, salt){
+  /* Simple deterministic hash — enough for local profile protection */
+  var str = pin + salt;
+  var h = 0;
+  for(var i=0;i<str.length;i++){ h = ((h<<5)-h) + str.charCodeAt(i); h |= 0; }
+  return h.toString(16);
+}
+
+function hkLocalCreateProfile(name, password){
+  if(!name || name.length < 1) return { ok:false, msg:'Please enter a display name.' };
+  var profiles = _getLocalProfiles();
+  var existing = profiles.find(function(p){ return p.name.toLowerCase() === name.toLowerCase(); });
+  if(existing) return { ok:false, msg:'A profile with this name already exists.' };
+  var id   = 'local_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,8);
+  var salt = Math.random().toString(36).slice(2);
+  var pwHash = password ? _hashPin(password, salt) : null;
+  var profile = { id:id, name:name, salt:salt, pwHash:pwHash, created: new Date().toISOString() };
+  profiles.push(profile);
+  _saveLocalProfiles(profiles);
+  return { ok:true, profile:profile };
+}
+
+function hkLocalSignIn(name, password){
+  var profiles = _getLocalProfiles();
+  var profile  = profiles.find(function(p){ return p.name.toLowerCase() === name.toLowerCase(); });
+  if(!profile) return { ok:false, msg:'No profile found with that name.' };
+  if(profile.pwHash){
+    if(!password) return { ok:false, msg:'This profile has a password. Please enter it.' };
+    if(_hashPin(password, profile.salt) !== profile.pwHash) return { ok:false, msg:'Incorrect password.' };
+  }
+  return { ok:true, profile:profile };
+}
+
+function _enterLocalProfile(profile, name){
+  var sess = {
+    access_token:  null,
+    refresh_token: null,
+    user: { id: profile.id, email: null, user_metadata: { full_name: name || profile.name } },
+    isLocal: true
+  };
+  _setSession(sess);
+  _applyAuthUser(sess);
+  _installStateMirror(profile.id);
+  var nm = name || profile.name;
+  if(typeof window.loadState === 'function') window.loadState();
+  if(window.state && window.state.settings) window.state.settings.userName = window.state.settings.userName || nm;
+  if(typeof window.saveState === 'function') window.saveState();
+  var inp = document.getElementById('wsNameInput'); if(inp) inp.value = nm;
+  var rm  = document.getElementById('wsReturningMsg');
+  if(rm){ rm.style.display='block'; var t=rm.querySelector('.ws-returning-text'); if(t) t.textContent='Welcome back, '+nm+'!'; }
+  var sw = document.getElementById('wsSwitchUser'); if(sw) sw.style.display='block';
+  /* Local profiles: release sync gate so sync layer doesn't wait forever */
+  if(typeof window._hkSyncAuthReady === 'function') window._hkSyncAuthReady(profile.id);
+  hkAuthHideScreen(function(){ if(typeof window.enterDashboard==='function') window.enterDashboard(); });
+}
+
+/* ════════════════════════════════════
+   UI HELPERS
+════════════════════════════════════ */
+function hkAuthShowScreen(){
+  var el = document.getElementById('hkAuthScreen');
+  if(el){ el.style.display='flex'; requestAnimationFrame(function(){ el.style.opacity='1'; }); }
+}
+function hkAuthHideScreen(cb){
+  var el = document.getElementById('hkAuthScreen');
+  if(!el){ if(cb) cb(); return; }
+  el.style.opacity='0';
+  setTimeout(function(){ el.style.display='none'; if(cb) cb(); }, 400);
+}
+
+window.hkAuthShowTab = function(tab){
+  ['signin','signup','recover','local'].forEach(function(t){
+    var p = document.getElementById('hkPanel_'+t);
+    var b = document.getElementById('hkTab_'+t);
+    var active = (t===tab);
+    if(p) p.style.display = active ? '' : 'none';
+    if(b){
+      b.style.color            = active ? '#3b82f6' : 'rgba(255,255,255,0.35)';
+      b.style.borderBottomColor= active ? '#3b82f6' : 'transparent';
+    }
+  });
+  ['hkSiMsg','hkSuMsg','hkRcMsg','hkLcMsg'].forEach(function(id){
+    var el=document.getElementById(id); if(el){ el.textContent=''; }
+  });
+  /* Hide fallback buttons when switching tabs */
+  ['hkSiFallback','hkSuFallback'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  /* Always refresh profile list when showing local tab */
+  if(tab==='local') _buildLocalProfileDropdown();
+};
+
+/* Switch between sign-in / create within Local Profile tab */
+window.hkLcSwitchMode = function(mode){
+  var siForm = document.getElementById('hkLcSignInForm');
+  var crForm = document.getElementById('hkLcCreateForm');
+  var btnSi  = document.getElementById('hkLcModeSignIn');
+  var btnCr  = document.getElementById('hkLcModeCreate');
+  var isSignIn = mode==='signin';
+  if(siForm) siForm.style.display = isSignIn ? '' : 'none';
+  if(crForm) crForm.style.display = isSignIn ? 'none' : '';
+  if(btnSi){ btnSi.style.background=isSignIn?'#1d4ed8':'transparent'; btnSi.style.color=isSignIn?'#fff':'rgba(255,255,255,0.4)'; }
+  if(btnCr){ btnCr.style.background=isSignIn?'transparent':'#059669'; btnCr.style.color=isSignIn?'rgba(255,255,255,0.4)':'#fff'; }
+  var msg=document.getElementById('hkLcMsg'); if(msg) msg.textContent='';
+};
+
+/* Auto-fallback: copy Supabase signup fields to local profile and create it */
+window.hkFallbackToLocal = function(){
+  var name = (document.getElementById('hkSuName')||{}).value.trim() ||
+             (document.getElementById('hkSiEmail')||{}).value.trim().split('@')[0] || '';
+  var pass = (document.getElementById('hkSuPass')||{}).value || '';
+  hkAuthShowTab('local');
+  /* Pre-fill the create form */
+  var nm = document.getElementById('hkLcName'); if(nm && name) nm.value = name;
+  var pw = document.getElementById('hkLcPass'); if(pw && pass) pw.value = pass;
+  hkLcSwitchMode('create');
+  /* Auto-focus name field */
+  var inp = document.getElementById('hkLcName');
+  if(inp){ inp.focus(); if(name){ /* name already filled, try create */ setTimeout(function(){ if(name) hkLocalDoCreate(); },100); } }
+};
+
+window.hkTogglePass = function(id, btn){
+  var inp=document.getElementById(id); if(!inp) return;
+  var show = inp.type==='password';
+  inp.type = show?'text':'password';
+  if(btn) btn.textContent = show?'🙈':'👁';
+};
+
+function _msg(id, text, color){
+  var el=document.getElementById(id); if(!el) return;
+  el.textContent=text; el.style.color=color||'rgba(255,255,255,0.7)';
+}
+function _btnLoad(id, on){
+  var b=document.getElementById(id); if(!b) return;
+  b.disabled=on; b.style.opacity=on?'0.55':'1';
+  if(on){ b._origText=b.textContent; b.textContent='⏳ Please wait…'; }
+  else { if(b._origText) b.textContent=b._origText; }
+}
+
+/* ════════════════════════════════════
+   SIGN IN (Supabase)
+════════════════════════════════════ */
+window.hkAuthDoSignIn = function(){
+  var email = (document.getElementById('hkSiEmail')||{}).value.trim();
+  var pass  = (document.getElementById('hkSiPass')||{}).value;
+  _msg('hkSiMsg','','');
+  if(!email || !pass){ _msg('hkSiMsg','Please enter your email and password.','var(--red,#ef4444)'); return; }
+  _btnLoad('hkSiBtn', true);
+  _authFetch('/token?grant_type=password', { email:email, password:pass })
+    .then(function(res){
+      _btnLoad('hkSiBtn', false);
+      if(res.ok && res.data.access_token){
+        var sess={ access_token:res.data.access_token, refresh_token:res.data.refresh_token, user:res.data.user, isLocal:false };
+        _setSession(sess);
+        _msg('hkSiMsg','✅ Signed in!','#10b981');
+        setTimeout(function(){ _enterAfterAuth(sess, null); }, 500);
+      } else {
+        var code = res.status;
+        var body = res.data || {};
+        var err  = body.error_description || body.msg || body.message || body.error || '';
+        if(code===400 && (err.toLowerCase().includes('invalid') || err.toLowerCase().includes('credentials')))
+          _msg('hkSiMsg','❌ Incorrect email or password.','var(--red,#ef4444)');
+        else if(code===422)
+          _msg('hkSiMsg','❌ Email not confirmed. Check your inbox.','var(--orange,#f59e0b)');
+        else if(code===401 || code===403)
+          _msg('hkSiMsg','❌ Authentication failed ('+code+').','var(--red,#ef4444)');
+        else
+          _msg('hkSiMsg','❌ '+(err||'Sign-in failed ('+code+').'+' Try a Local Profile below.'),'var(--red,#ef4444)');
+      }
+    }).catch(function(e){
+      _btnLoad('hkSiBtn', false);
+      _msg('hkSiMsg', _netErrMsg(e)||'❌ Unknown error.', 'var(--orange,#f59e0b)');
+      var fb=document.getElementById('hkSiFallback'); if(fb) fb.style.display='';
+    });
+};
+
+/* ════════════════════════════════════
+   SIGN UP (Supabase)
+════════════════════════════════════ */
+window.hkAuthDoSignUp = function(){
+  var name  = (document.getElementById('hkSuName')||{}).value.trim();
+  var email = (document.getElementById('hkSuEmail')||{}).value.trim();
+  var pass  = (document.getElementById('hkSuPass')||{}).value;
+  var pass2 = (document.getElementById('hkSuPass2')||{}).value;
+  _msg('hkSuMsg','','');
+  if(!name)           { _msg('hkSuMsg','Please enter your display name.','var(--red,#ef4444)'); return; }
+  if(!email)          { _msg('hkSuMsg','Please enter your email address.','var(--red,#ef4444)'); return; }
+  if(pass.length < 6) { _msg('hkSuMsg','Password must be at least 6 characters.','var(--red,#ef4444)'); return; }
+  if(pass !== pass2)  { _msg('hkSuMsg','Passwords do not match.','var(--red,#ef4444)'); return; }
+  _btnLoad('hkSuBtn', true);
+  _authFetch('/signup', { email:email, password:pass, data:{ full_name:name } })
+    .then(function(res){
+      _btnLoad('hkSuBtn', false);
+      if(res.ok && res.data.user && res.data.user.id){
+        if(res.data.access_token){
+          var sess={ access_token:res.data.access_token, refresh_token:res.data.refresh_token, user:res.data.user, isLocal:false };
+          _setSession(sess);
+          _msg('hkSuMsg','✅ Account created! Signing you in…','#10b981');
+          setTimeout(function(){ _enterAfterAuth(sess, name); }, 700);
+        } else {
+          _msg('hkSuMsg','✅ Account created! Check your email to confirm, then sign in.','#10b981');
+          setTimeout(function(){ window.hkAuthShowTab('signin'); }, 3500);
+        }
+      } else {
+        var body = res.data||{};
+        var err  = body.error_description || body.msg || body.message || body.error || '';
+        if(res.status===422 && err.toLowerCase().includes('already'))
+          _msg('hkSuMsg','❌ This email is already registered. Try Sign In.','var(--orange,#f59e0b)');
+        else if(res.status===400)
+          _msg('hkSuMsg','❌ Sign-up not allowed. Enable Email auth in your Supabase dashboard, or use a Local Profile below.','var(--orange,#f59e0b)');
+        else
+          _msg('hkSuMsg','❌ '+(err||'Sign-up failed. Try a Local Profile below.'),'var(--red,#ef4444)');
+      }
+    }).catch(function(e){
+      _btnLoad('hkSuBtn', false);
+      _msg('hkSuMsg', _netErrMsg(e)||'❌ Unknown error.', 'var(--orange,#f59e0b)');
+      var fb=document.getElementById('hkSuFallback'); if(fb) fb.style.display='';
+    });
+};
+
+/* ════════════════════════════════════
+   PASSWORD RECOVERY (Supabase)
+════════════════════════════════════ */
+window.hkAuthDoRecover = function(){
+  var email=(document.getElementById('hkRcEmail')||{}).value.trim();
+  _msg('hkRcMsg','','');
+  if(!email){ _msg('hkRcMsg','Please enter your email address.','var(--red,#ef4444)'); return; }
+  _btnLoad('hkRcBtn', true);
+  _authFetch('/recover', { email:email })
+    .then(function(){
+      _btnLoad('hkRcBtn', false);
+      _msg('hkRcMsg','✅ Reset link sent (if that email exists). Check your inbox and spam folder.','#10b981');
+      var el=document.getElementById('hkRcEmail'); if(el) el.value='';
+    }).catch(function(e){
+      _btnLoad('hkRcBtn', false);
+      _msg('hkRcMsg', _netErrMsg(e)||'❌ Could not send reset email. Try again.','var(--orange,#f59e0b)');
+    });
+};
+
+/* ════════════════════════════════════
+   LOCAL PROFILE ACTIONS
+════════════════════════════════════ */
+window.hkLocalDoCreate = function(){
+  var name  = (document.getElementById('hkLcName')||{}).value.trim();
+  var pass  = (document.getElementById('hkLcPass')||{}).value;
+  _msg('hkLcMsg','','');
+  if(!name){ _msg('hkLcMsg','Please enter a name.','var(--red,#ef4444)'); return; }
+  var r = hkLocalCreateProfile(name, pass||null);
+  if(!r.ok){ _msg('hkLcMsg','❌ '+r.msg,'var(--red,#ef4444)'); return; }
+  _msg('hkLcMsg','✅ Profile created! Entering…','#10b981');
+  setTimeout(function(){ _enterLocalProfile(r.profile, name); }, 500);
+};
+
+window.hkLocalDoSignIn = function(){
+  var name = (document.getElementById('hkLcSignInName')||{}).value.trim();
+  var pass = (document.getElementById('hkLcSignInPass')||{}).value;
+  _msg('hkLcMsg','','');
+  if(!name){ _msg('hkLcMsg','Please enter your profile name.','var(--red,#ef4444)'); return; }
+  var r = hkLocalSignIn(name, pass||null);
+  if(!r.ok){ _msg('hkLcMsg','❌ '+r.msg,'var(--red,#ef4444)'); return; }
+  _msg('hkLcMsg','✅ Welcome back, '+r.profile.name+'!','#10b981');
+  setTimeout(function(){ _enterLocalProfile(r.profile, r.profile.name); }, 400);
+};
+
+window._buildLocalProfileDropdown = function _buildLocalProfileDropdown(){
+  var sel = document.getElementById('hkLcSignInName');
+  if(!sel) return;
+  var profiles = _getLocalProfiles();
+  sel.innerHTML = '<option value="">— Choose your profile —</option>';
+  profiles.forEach(function(p){
+    var o=document.createElement('option'); o.value=p.name; o.textContent=p.name+(p.pwHash?' 🔒':''); sel.appendChild(o);
+  });
+  /* Show/hide the "no profiles" message and set default mode */
+  var noProf = document.getElementById('hkLcNoProfiles');
+  var siForm  = document.getElementById('hkLcSignInForm');
+  var hasProfiles = profiles.length > 0;
+  if(noProf) noProf.style.display = hasProfiles ? 'none' : '';
+  if(sel)    sel.style.display    = hasProfiles ? '' : 'none';
+  /* If no profiles exist, auto-switch to create mode */
+  if(!hasProfiles) hkLcSwitchMode('create');
+  else             hkLcSwitchMode('signin');
+  var pwRow = document.getElementById('hkLcSignInPwRow');
+  if(pwRow) pwRow.style.display = 'none';
+}
+var _buildLocalProfileDropdown = window._buildLocalProfileDropdown;
+
+window.hkLcSignInNameChange = function(){
+  var sel = document.getElementById('hkLcSignInName');
+  var profiles = _getLocalProfiles();
+  var name = sel ? sel.value : '';
+  var profile = profiles.find(function(p){ return p.name===name; });
+  var pwRow = document.getElementById('hkLcSignInPwRow');
+  if(pwRow) pwRow.style.display = (profile && profile.pwHash) ? '' : 'none';
+};
+
+/* ════════════════════════════════════
+   SIGN OUT
+════════════════════════════════════ */
+window.hkAuthSignOut = function(){
+  var sess = _getSession();
+  _clearSession();
+  window._hkMirrorInstalled = null;
+  localStorage.removeItem('hisabKitabState');
+  if(window.state && window.state.settings) window.state.settings.userName = '';
+  /* Show welcome screen then auth overlay */
+  var ws = document.getElementById('welcomeScreen');
+  if(ws){ ws.classList.remove('ws-gone','ws-hidden'); ws.classList.add('ws-visible'); }
+  var inp = document.getElementById('wsNameInput'); if(inp){ inp.value=''; }
+  var rm  = document.getElementById('wsReturningMsg'); if(rm) rm.style.display='none';
+  var sw  = document.getElementById('wsSwitchUser');   if(sw) sw.style.display='none';
+  hkAuthShowScreen();
+  _buildLocalProfileDropdown();
+  window.hkAuthShowTab('local');
+  /* Supabase logout */
+  if(sess && sess.access_token){
+    fetch(SB_URL+'/auth/v1/logout',{ method:'POST', mode:'cors',
+      headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+sess.access_token }
+    }).catch(function(){});
+  }
+};
+
+/* ════════════════════════════════════
+   INIT — check stored session on load
+════════════════════════════════════ */
+window.hkAuthInit = function(){
+  var sess = _getSession();
+  if(!sess || !sess.user){ hkAuthShowScreen(); _buildLocalProfileDropdown(); window.hkAuthShowTab('local'); return; }
+
+  /* Local profile — release sync gate (no cloud sync for local), go straight to dashboard */
+  if(sess.isLocal){
+    _applyAuthUser(sess);          /* sets _hkAuthUid and calls _hkSyncAuthReady */
+    _installStateMirror(sess.user.id);
+    var nm = (sess.user.user_metadata && (sess.user.user_metadata.full_name||sess.user.user_metadata.name)) || 'User';
+    var inp = document.getElementById('wsNameInput'); if(inp) inp.value=nm;
+    if(typeof window.loadState==='function') window.loadState();
+    if(window.state && window.state.settings) window.state.settings.userName = window.state.settings.userName||nm;
+    hkAuthHideScreen(function(){ if(typeof window.enterDashboard==='function') window.enterDashboard(); });
+    return;
+  }
+
+  /* Supabase session — refresh token first to validate it */
+  if(!sess.refresh_token){ _clearSession(); hkAuthShowScreen(); _buildLocalProfileDropdown(); window.hkAuthShowTab('local'); return; }
+  _refreshSession(sess.refresh_token).then(function(newSess){
+    if(newSess && newSess.user){
+      _applyAuthUser(newSess);     /* sets _hkAuthUid + releases sync gate */
+      _installStateMirror(newSess.user.id);
+      var name = (newSess.user.user_metadata && (newSess.user.user_metadata.full_name||newSess.user.user_metadata.name))
+                  || (newSess.user.email||'').split('@')[0] || 'User';
+      var inp2 = document.getElementById('wsNameInput'); if(inp2) inp2.value=name;
+      if(typeof window.loadState==='function') window.loadState();
+      if(window.state && window.state.settings) window.state.settings.userName = window.state.settings.userName||name;
+      var rm2 = document.getElementById('wsReturningMsg');
+      if(rm2){ rm2.style.display='block'; var t=rm2.querySelector('.ws-returning-text'); if(t) t.textContent='Welcome back, '+name+'!'; }
+      var sw2 = document.getElementById('wsSwitchUser'); if(sw2) sw2.style.display='block';
+      hkAuthHideScreen(function(){
+        if(typeof window.enterDashboard==='function') window.enterDashboard();
+        /* Pull cloud data immediately on session restore */
+        setTimeout(function(){
+          if(typeof window.hkTriggerSync==='function') window.hkTriggerSync();
+        }, 1500);
+      });
+    } else {
+      _clearSession(); hkAuthShowScreen(); _buildLocalProfileDropdown(); window.hkAuthShowTab('local');
+    }
+  });
+};
+
+/* ════════════════════════════════════
+   HANDLE PASSWORD RESET REDIRECT
+   (Supabase puts #access_token=...&type=recovery in URL)
+════════════════════════════════════ */
+(function(){
+  var hash = window.location.hash;
+  if(!hash || !hash.includes('type=recovery')) return;
+  var params={};
+  hash.slice(1).split('&').forEach(function(p){ var kv=p.split('='); params[decodeURIComponent(kv[0])]=decodeURIComponent(kv[1]||''); });
+  if(!params.access_token) return;
+  window._hkRecoveryToken = params.access_token;
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      var m = document.getElementById('hkResetPwdModal');
+      if(m) m.style.display='flex';
+    }, 600);
+  });
+})();
+
+window.hkDoSetNewPassword = function(){
+  var p1  = (document.getElementById('hkNewPwd1')||{}).value;
+  var p2  = (document.getElementById('hkNewPwd2')||{}).value;
+  var msg = document.getElementById('hkSetPwdMsg');
+  function setMsg(t,c){ if(msg){ msg.textContent=t; msg.style.color=c; } }
+  if(!p1||p1.length<6){ setMsg('Password must be at least 6 characters.','var(--red,#ef4444)'); return; }
+  if(p1!==p2){          setMsg('Passwords do not match.','var(--red,#ef4444)'); return; }
+  _btnLoad('hkSetPwdBtn',true);
+  fetch(SB_URL+'/auth/v1/user',{
+    method:'PUT', mode:'cors',
+    headers:{ 'apikey':SB_KEY, 'Authorization':'Bearer '+(window._hkRecoveryToken||''), 'Content-Type':'application/json' },
+    body: JSON.stringify({ password: p1 })
+  }).then(function(r){ return r.json().then(function(d){ return {ok:r.ok,data:d}; }); })
+  .then(function(res){
+    _btnLoad('hkSetPwdBtn',false);
+    if(res.ok && res.data.id){
+      setMsg('✅ Password updated! Redirecting to sign in…','#10b981');
+      history.replaceState(null,'',window.location.pathname);
+      setTimeout(function(){
+        var m=document.getElementById('hkResetPwdModal'); if(m) m.style.display='none';
+        hkAuthShowScreen(); window.hkAuthShowTab('signin');
+      }, 2000);
+    } else {
+      var err=(res.data&&(res.data.error_description||res.data.msg||res.data.message))||'Failed. The link may have expired.';
+      setMsg('❌ '+err,'var(--red,#ef4444)');
+    }
+  }).catch(function(){
+    _btnLoad('hkSetPwdBtn',false);
+    setMsg('❌ Network error. Please try again.','var(--red,#ef4444)');
+  });
+};
+
+window.addEventListener('load', function(){
+  _buildLocalProfileDropdown();
+  window.hkAuthInit();
+});
+
+console.log('[HisabKitab Auth] ✅ Auth layer loaded (Supabase + Local Profile).');
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
      SUPABASE CLOUD SYNC LAYER — HisabKitab v14
      ▸ Normalized: each entity syncs to its own table with real columns
      ▸ 12 tables: expenses, emis, settings, emergency_fund, savings_goals,
@@ -24909,8 +25694,46 @@ function _loadCfg(){
 function _saveCfg(cfg){ localStorage.setItem(CFG_KEY, JSON.stringify(cfg)); }
 
 var _cfg = _loadCfg();
+/* Use auth user ID if available, fall back to device UID */
 var _uid = localStorage.getItem(UID_KEY) || _genUid();
-localStorage.setItem(UID_KEY, _uid);
+
+/* ── Auth UID watcher — updated by auth layer after login ── */
+Object.defineProperty(window, '_hkAuthUid', {
+  set: function(v){
+    if(v && v !== _uid){
+      _uid = v;
+      localStorage.setItem(UID_KEY, v);
+    }
+    this._hkAuthUidValue = v;
+  },
+  get: function(){ return this._hkAuthUidValue || null; },
+  configurable: true
+});
+
+/* ── Auth token getter — used for Bearer in sync headers ── */
+function _getAuthToken(){
+  try{
+    var sess = JSON.parse(localStorage.getItem('hk_auth_session_v2')||'null');
+    /* Local profiles have no access_token — use anon key */
+    if(!sess || sess.isLocal || !sess.access_token) return (_cfg.key||'').trim();
+    return sess.access_token;
+  } catch(e){ return (_cfg.key||'').trim(); }
+}
+
+/* ── Is current session a local profile? ── */
+function _isLocalProfile(){
+  try{
+    var sess = JSON.parse(localStorage.getItem('hk_auth_session_v2')||'null');
+    return sess && sess.isLocal === true;
+  } catch(e){ return false; }
+}
+
+/* ── Sync gate — waits for auth to set _hkAuthUid before first pull ── */
+var _authGateResolved = false;
+window._hkSyncAuthReady = function(uid){
+  if(uid) _uid = uid;
+  _authGateResolved = true;
+};
 
 function _genUid(){
   var u = 'hk_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,9);
@@ -24918,19 +25741,11 @@ function _genUid(){
   return u;
 }
 
-/* ── Get effective user ID: prefer auth user.id, fall back to device UID ── */
-function _effectiveUid(){
-  if(typeof window._hkAuthGetUid === 'function'){
-    var authUid = window._hkAuthGetUid();
-    if(authUid) return authUid;
-  }
-  return _uid;
-}
-
 function _ready(){
+  /* Never sync local-only profiles */
+  if(_isLocalProfile()) return false;
   var url = (_cfg.url||'').trim();
   var key = (_cfg.key||'').trim();
-  /* Must have both AND url must look like a real http URL */
   return !!(url) && !!(key) && (url.startsWith('http://') || url.startsWith('https://'));
 }
 
@@ -24938,18 +25753,12 @@ function _ready(){
    1.  REST HELPER
 ══════════════════════════════════════ */
 function _hdrs(includeContentType){
-  /* Use auth engine headers if available (user's JWT for proper RLS) */
-  if(typeof window._hkAuthGetHeaders === 'function'){
-    var authH = window._hkAuthGetHeaders(includeContentType);
-    if(authH && authH.headers) return authH.headers;
-  }
-  var key = (_cfg.key||'').trim();
+  var anonKey = (_cfg.key||'').trim();
+  var bearer  = _getAuthToken(); /* auth token if logged in, else anon key */
   var headers = {
-    'apikey': key,
-    'Authorization': 'Bearer ' + key
+    'apikey':        anonKey,   /* always the anon key for API gateway */
+    'Authorization': 'Bearer ' + bearer  /* auth token for RLS */
   };
-  /* Content-Type only on write requests (POST/PATCH) — including it on GET/DELETE
-     triggers a CORS preflight that Supabase sometimes rejects → "Failed to fetch" */
   if(includeContentType) headers['Content-Type'] = 'application/json';
   return headers;
 }
@@ -24987,7 +25796,7 @@ function _upsert(table, rows){
 /* Select rows for this device */
 function _select(table, extra){
   if(!_ready()) return Promise.resolve([]);
-  var qs = 'user_id=eq.'+encodeURIComponent(_effectiveUid()) + (extra?'&'+extra:'');
+  var qs = 'user_id=eq.'+encodeURIComponent(_uid) + (extra?'&'+extra:'');
   return _fetchWithRetry(_base()+'/'+table+'?'+qs, { mode:'cors', headers: _hdrs(false) })
     .then(function(r){
       if(!r.ok) return r.text().then(function(t){ throw new Error(t); });
@@ -24998,7 +25807,7 @@ function _select(table, extra){
 /* Delete all rows for this device from a table (before re-push) */
 function _deleteAll(table){
   if(!_ready()) return Promise.resolve(null);
-  return _fetchWithRetry(_base()+'/'+table+'?user_id=eq.'+encodeURIComponent(_effectiveUid()), {
+  return _fetchWithRetry(_base()+'/'+table+'?user_id=eq.'+encodeURIComponent(_uid), {
     method: 'DELETE',
     mode: 'cors',
     headers: _hdrs(false)
@@ -25014,7 +25823,7 @@ var NOW = function(){ return new Date().toISOString(); };
 function _mapExpenses(st){
   return (st.expenses||[]).map(function(e){
     return {
-      user_id: _effectiveUid(), id: e.id||('exp_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: e.id||('exp_'+Math.random().toString(36).slice(2)),
       name: e.title||e.name||'', amount: Number(e.amount)||0,
       category: e.category||'Other', type: e.type||'expense',
       date: e.dueDate||e.date||null, note: e.notes||e.note||null,
@@ -25027,7 +25836,7 @@ function _mapExpenses(st){
 function _mapEmis(st){
   return (st.emis||[]).map(function(e){
     return {
-      user_id: _effectiveUid(), id: e.id||('emi_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: e.id||('emi_'+Math.random().toString(36).slice(2)),
       name: e.name||'', emi: Number(e.emi)||0,
       total_amount: Number(e.totalAmount)||0,
       months_left: Number(e.monthsLeft)||0,
@@ -25042,7 +25851,7 @@ function _mapEmis(st){
 function _mapSettings(st){
   var s = st.settings||{};
   return [{
-    user_id: _effectiveUid(),
+    user_id: _uid,
     income: Number(s.income)||0,
     budget: Number(s.budget)||0,
     savings: Number(s.savings)||0,
@@ -25060,7 +25869,7 @@ function _mapSettings(st){
 function _mapEmergencyFund(st){
   var ef = st.emergencyFund||{};
   return [{
-    user_id: _effectiveUid(),
+    user_id: _uid,
     target: Number(ef.target)||0,
     saved: Number(ef.saved)||0,
     monthly: Number(ef.monthly)||0,
@@ -25074,7 +25883,7 @@ function _mapEmergencyFund(st){
 function _mapSavingsGoals(st){
   return (st.savingsGoals||[]).map(function(g){
     return {
-      user_id: _effectiveUid(), id: g.id||('sg_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: g.id||('sg_'+Math.random().toString(36).slice(2)),
       title: g.title||'', emoji: g.emoji||'🎯',
       target_amount: Number(g.targetAmount)||0,
       allocated: Number(g.allocated)||0,
@@ -25088,7 +25897,7 @@ function _mapSavingsGoals(st){
 function _mapAssets(st){
   return (st.assets||[]).map(function(a){
     return {
-      user_id: _effectiveUid(), id: a.id||('ast_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: a.id||('ast_'+Math.random().toString(36).slice(2)),
       name: a.name||'', type: a.type||'asset',
       value: Number(a.value)||0,
       note: a.note||null, updated_at: NOW()
@@ -25099,7 +25908,7 @@ function _mapAssets(st){
 function _mapIncomeSources(st){
   return (st.incomeSources||[]).map(function(s){
     return {
-      user_id: _effectiveUid(), id: s.id||('inc_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: s.id||('inc_'+Math.random().toString(36).slice(2)),
       name: s.name||'', amount: Number(s.amount)||0,
       type: s.type||'salary', frequency: s.frequency||'monthly',
       note: s.note||null, updated_at: NOW()
@@ -25110,7 +25919,7 @@ function _mapIncomeSources(st){
 function _mapDebts(st){
   return (st.debts||[]).map(function(d){
     return {
-      user_id: _effectiveUid(), id: d.id||('dbt_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: d.id||('dbt_'+Math.random().toString(36).slice(2)),
       name: d.name||'', balance: Number(d.balance)||0,
       interest_rate: Number(d.interestRate)||0,
       min_payment: Number(d.minPayment)||0,
@@ -25123,7 +25932,7 @@ function _mapDebts(st){
 function _mapSplits(st){
   return (st.splits||[]).map(function(s){
     return {
-      user_id: _effectiveUid(), id: s.id||('spl_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: s.id||('spl_'+Math.random().toString(36).slice(2)),
       title: s.title||'', total: Number(s.total)||0,
       members: JSON.stringify(s.members||[]),
       date: s.date||null, note: s.note||null,
@@ -25135,7 +25944,7 @@ function _mapSplits(st){
 function _mapLending(st){
   return (st.lendingLedger||[]).map(function(l){
     return {
-      user_id: _effectiveUid(), id: l.id||('lnd_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: l.id||('lnd_'+Math.random().toString(36).slice(2)),
       person: l.person||'', type: l.type||'lent',
       amount: Number(l.amount)||0,
       date: l.date||null, note: l.note||null,
@@ -25147,7 +25956,7 @@ function _mapLending(st){
 function _mapReminders(st){
   return (st.reminders||[]).map(function(r){
     return {
-      user_id: _effectiveUid(), id: r.id||('rem_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: r.id||('rem_'+Math.random().toString(36).slice(2)),
       title: r.title||'', date: r.date||null,
       amount: Number(r.amount)||0,
       category: r.category||null, note: r.note||null,
@@ -25159,7 +25968,7 @@ function _mapReminders(st){
 function _mapUpcoming(st){
   return (st.upcoming||[]).map(function(u){
     return {
-      user_id: _effectiveUid(), id: u.id||('upc_'+Math.random().toString(36).slice(2)),
+      user_id: _uid, id: u.id||('upc_'+Math.random().toString(36).slice(2)),
       title: u.title||'', date: u.date||null,
       amount: Number(u.amount)||0,
       category: u.category||null, note: u.note||null,
@@ -25294,14 +26103,14 @@ var _lastPush  = 0;
 var MIN_INTERVAL = 6000; // 6 s debounce
 
 function _schedulePush(){
-  if(!_ready() || !window.hkAuthReady) return;
+  if(!_ready()) return;
   clearTimeout(_pushTimer);
   var wait = Math.max(0, MIN_INTERVAL - (Date.now() - _lastPush));
   _pushTimer = setTimeout(_doPush, wait);
 }
 
 function _doPush(showToast){
-  if(!_ready() || !window.state || !window.hkAuthReady) return Promise.resolve();
+  if(!_ready() || !window.state) return Promise.resolve();
   _lastPush = Date.now();
   var st = window.state;
   var promises = TABLES.map(function(t){
@@ -25346,7 +26155,7 @@ function _doPush(showToast){
 }
 
 function _doPull(showToast){
-  if(!_ready() || !window.hkAuthReady) return Promise.resolve();
+  if(!_ready()) return Promise.resolve();
   var st = window.state || {};
   var promises = PULL_MAP.map(function(t){
     return _select(t.name).then(function(rows){
@@ -25383,14 +26192,36 @@ function _prefillInputs(){
 }
 
 window.addEventListener('load', function(){
-  setTimeout(function(){
+  /* Wait up to 6 seconds for auth to complete, then sync */
+  var waited = 0;
+  function _tryInit(){
+    waited += 200;
+    if(!_authGateResolved && waited < 6000){
+      setTimeout(_tryInit, 200);
+      return;
+    }
+    /* Auth resolved (or timed out) — now safe to sync */
     _updateUidDisplay();
     _prefillInputs();
-    /* Pull/push only happens after auth succeeds (hkAuthReady is set in _onAuthSuccess).
-       Do NOT auto-push on load — prevents "Failed to fetch" when no session exists. */
-    _setStatus(_ready());
-  }, 1500);
+    if(_ready()){
+      _setStatus(true);
+      _doPull(false).then(function(){
+        setTimeout(function(){ _schedulePush(); }, 3000);
+      });
+    }
+  }
+  setTimeout(_tryInit, 400);
 });
+
+/* Called by auth layer after successful login/session-restore */
+window.hkTriggerSync = function(){
+  if(!_ready()) return;
+  setTimeout(function(){
+    _doPull(false).then(function(){
+      setTimeout(function(){ _doPush(false); }, 2000);
+    });
+  }, 500);
+};
 
 /* ═══════════════════════════════════
    6.  SQL SCHEMA GENERATOR
@@ -25678,7 +26509,7 @@ window.hkSbSaveConfig = function(){
   _cfg = { url: url, key: key };
   _saveCfg(_cfg);
 
-  var testUrl = url.replace(/\/$/,'') + '/rest/v1/hk_settings?user_id=eq.'+encodeURIComponent(_effectiveUid())+'&limit=1';
+  var testUrl = url.replace(/\/$/,'') + '/rest/v1/hk_settings?user_id=eq.'+encodeURIComponent(_uid)+'&limit=1';
   _setMsg('🔄 Testing: '+testUrl,'var(--text3)');
 
   fetch(testUrl, { headers: _hdrs() })
@@ -25815,9 +26646,8 @@ window.saveState = function(){
 function _updateUidDisplay(){
   var el  = document.getElementById('hkSbUidDisplay');
   var el2 = document.getElementById('hkSbUidDisplay2');
-  var effectiveId = _effectiveUid();
-  if(el)  el.textContent  = effectiveId;
-  if(el2) el2.textContent = effectiveId;
+  if(el)  el.textContent  = _uid;
+  if(el2) el2.textContent = _uid;
 }
 
 function _setLastSync(){
@@ -25831,7 +26661,12 @@ function _setLastSync(){
 function _setStatus(online){
   function _applyBadge(badge){
     if(!badge) return;
-    if(online){
+    if(_isLocalProfile()){
+      badge.textContent='● LOCAL';
+      badge.style.color='#f59e0b';
+      badge.style.background='rgba(245,158,11,0.12)';
+      badge.style.border='1px solid rgba(245,158,11,0.25)';
+    } else if(online){
       badge.textContent='● LIVE';
       badge.style.color='#10b981';
       badge.style.background='rgba(16,185,129,0.12)';
@@ -25847,7 +26682,7 @@ function _setStatus(online){
   _applyBadge(document.getElementById('hkSbStatusBadge2'));
 }
 
-console.log('[HisabKitab v14] ☁️ Supabase normalized sync loaded. Device UID:', _uid, '| Ready:', _ready());
+console.log('[HisabKitab v14] ☁️ Supabase sync loaded. UID:', _uid, '| Ready:', _ready(), '| Local:', _isLocalProfile());
 })();
 </script>
 <!-- END SUPABASE SYNC LAYER -->
@@ -26593,850 +27428,13 @@ window.addEventListener('load', function(){
   var keyEl = document.getElementById('hkSbKey');
   if(urlEl && !urlEl.value) urlEl.value = 'https://aczlqaezfloenmuchuxm.supabase.co';
   if(keyEl && !keyEl.value) keyEl.value = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjemxxYWV6ZmxvZW5tdWNodXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MzI5MjcsImV4cCI6MjA5MzIwODkyN30._Qvq0PlrMZEUWmvwKJZ5ZCS4lzqE5-IOGcAqaU6AuDo';
+  /* Auto-connect silently on first visit */
+  setTimeout(function(){
+    try { if(typeof window.hkSbSaveConfig === 'function') window.hkSbSaveConfig(); } catch(e){}
+  }, 800);
 });
 
 })(); /* end IIFE */
 </script>
-
-<!-- ═══════════════════════════════════════════════════════════════════
-     HISAB KITAB — SUPABASE AUTH ENGINE  (v1 — complete)
-     ▸ Email + Password Sign-In / Sign-Up
-     ▸ Per-user data isolation via auth.uid() RLS
-     ▸ Password recovery (magic link to email)
-     ▸ Per-user WebAuthn biometric (credential keyed to user.id)
-     ▸ Session persistence — auto-login on revisit
-     ▸ Logout — signs out and returns to welcome screen
-═══════════════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-'use strict';
-
-/* ══════════════════════════
-   0. CONSTANTS
-══════════════════════════ */
-/* Sync layer checks this before any push/pull — stays false until sign-in succeeds */
-window.hkAuthReady = false;
-var SUPA_URL = 'https://aczlqaezfloenmuchuxm.supabase.co';
-var SUPA_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFjemxxYWV6ZmxvZW5tdWNodXhtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc2MzI5MjcsImV4cCI6MjA5MzIwODkyN30._Qvq0PlrMZEUWmvwKJZ5ZCS4lzqE5-IOGcAqaU6AuDo';
-
-/* ── Per-user localStorage keys ── */
-function _stateKey(uid)   { return 'hisabKitabState_' + uid; }
-function _bioKey(uid)     { return 'hk_webauthn_cred_' + uid; }
-function _pinKey(uid)     { return 'hk_pin_' + uid; }
-function _encKey(uid)     { return 'hk_enc_on_' + uid; }
-function _bioAutoKey(uid) { return 'hk_bio_auto_' + uid; }
-
-/* ══════════════════════════
-   1. SUPABASE CLIENT
-══════════════════════════ */
-var _supabase = null;
-function _getClient(){
-  if(_supabase) return _supabase;
-  try {
-    _supabase = window.supabase.createClient(SUPA_URL, SUPA_ANON_KEY, {
-      auth: {
-        persistSession: true,
-        autoRefreshToken: true,
-        detectSessionInUrl: true  /* handles password-reset redirect */
-      }
-    });
-  } catch(e){
-    console.error('[HK Auth] createClient failed:', e);
-  }
-  return _supabase;
-}
-
-/* ══════════════════════════
-   2. SESSION STATE
-══════════════════════════ */
-var _currentSession  = null;   /* Supabase session object */
-var _currentUser     = null;   /* Supabase user object    */
-
-function _setSession(session){
-  _currentSession = session;
-  _currentUser    = session ? session.user : null;
-  /* Expose globally so the existing sync layer can pick up the token */
-  window.hkAuthSession = session;
-  window.hkAuthUser    = _currentUser;
-}
-
-/* ══════════════════════════
-   3. PATCH SYNC LAYER
-   Replace device-UID with auth user.id and use
-   the user's JWT instead of the bare anon key
-══════════════════════════ */
-function _patchSyncLayer(){
-  /* Wait for the sync IIFE to have registered its globals */
-  var attempts = 0;
-  var t = setInterval(function(){
-    attempts++;
-    if(attempts > 40){ clearInterval(t); return; }
-    /* The sync layer exposes window.hkSbPush / hkSbPull and internal
-       vars via closure — we patch by monkey-patching the fetch headers
-       through the global _hkAuthGetHeaders hook the sync layer checks. */
-    window._hkAuthGetHeaders = function(includeContentType){
-      var sess = window.hkAuthSession;
-      var token = (sess && sess.access_token) ? sess.access_token : SUPA_ANON_KEY;
-      var uid   = (sess && sess.user) ? sess.user.id : null;
-      var h = {
-        'apikey': SUPA_ANON_KEY,
-        'Authorization': 'Bearer ' + token
-      };
-      if(includeContentType) h['Content-Type'] = 'application/json';
-      return { headers: h, uid: uid };
-    };
-    window._hkAuthGetUid = function(){
-      var sess = window.hkAuthSession;
-      return (sess && sess.user) ? sess.user.id : null;
-    };
-    clearInterval(t);
-  }, 200);
-}
-
-/* ══════════════════════════
-   4. PER-USER STATE MANAGEMENT
-══════════════════════════ */
-function _loadUserState(uid){
-  /* Load state scoped to this user */
-  var raw = localStorage.getItem(_stateKey(uid));
-  if(!raw){
-    /* No user-specific state yet — try migrating from legacy global key */
-    raw = localStorage.getItem('hisabKitabState');
-    if(raw){
-      localStorage.setItem(_stateKey(uid), raw);
-    }
-  }
-  if(raw){
-    try {
-      var parsed = JSON.parse(raw);
-      window.state = Object.assign(window.state || {}, parsed);
-    } catch(e){}
-  }
-  /* Patch saveState to write to user-scoped key */
-  var _origSave = window.saveState;
-  window.saveState = function(){
-    if(_origSave) _origSave();
-    try {
-      var data = localStorage.getItem('hisabKitabState') || JSON.stringify(window.state || {});
-      localStorage.setItem(_stateKey(uid), data);
-    } catch(e){}
-  };
-}
-
-function _clearUserState(){
-  /* Restore saveState to original if it was patched */
-  window.state = {
-    settings:{}, expenses:[], emis:[], holidays:[],
-    upcoming:[], savingsGoals:[], assets:[], incomeSources:[],
-    debts:[], splits:[], lendingLedger:[], reminders:[]
-  };
-}
-
-/* ══════════════════════════
-   5. AUTH UI HELPERS
-══════════════════════════ */
-var _authTab = 'signin';
-
-window.hkAuthShowTab = function(tab){
-  _authTab = tab;
-  var signInBtn = document.getElementById('wsTabSignIn');
-  var signUpBtn = document.getElementById('wsTabSignUp');
-  var confirmRow = document.getElementById('wsAuthConfirmRow');
-  var nameRow    = document.getElementById('wsAuthNameRow');
-  var authBtn    = document.getElementById('wsAuthBtn');
-  var forgotRow  = document.getElementById('wsAuthForgotRow');
-  var pwdInput   = document.getElementById('wsAuthPassword');
-
-  if(tab === 'signin'){
-    if(signInBtn){ signInBtn.style.background='rgba(26,200,100,0.22)'; signInBtn.style.color='#4ade80'; }
-    if(signUpBtn){ signUpBtn.style.background='transparent'; signUpBtn.style.color='rgba(255,255,255,0.45)'; }
-    if(confirmRow) confirmRow.style.display='none';
-    if(nameRow)    nameRow.style.display='none';
-    if(authBtn)  { authBtn.textContent='🔑 Sign In'; }
-    if(forgotRow)  forgotRow.style.display='block';
-    if(pwdInput)   pwdInput.autocomplete='current-password';
-  } else {
-    if(signUpBtn){ signUpBtn.style.background='rgba(26,200,100,0.22)'; signUpBtn.style.color='#4ade80'; }
-    if(signInBtn){ signInBtn.style.background='transparent'; signInBtn.style.color='rgba(255,255,255,0.45)'; }
-    if(confirmRow) confirmRow.style.display='block';
-    if(nameRow)    nameRow.style.display='block';
-    if(authBtn)  { authBtn.textContent='✨ Create Account'; }
-    if(forgotRow)  forgotRow.style.display='none';
-    if(pwdInput)   pwdInput.autocomplete='new-password';
-  }
-  _hkAuthSetMsg('','');
-};
-
-window.hkAuthTogglePwd = function(inputId, btn){
-  var inp = document.getElementById(inputId);
-  if(!inp) return;
-  if(inp.type === 'password'){ inp.type = 'text'; btn.textContent = '🙈'; }
-  else                       { inp.type = 'password'; btn.textContent = '👁'; }
-};
-
-function _hkAuthSetMsg(msg, color){
-  var el = document.getElementById('wsAuthMsg');
-  if(!el) return;
-  if(!msg){ el.style.display='none'; el.textContent=''; return; }
-  el.style.display='block';
-  el.style.background = color==='error' ? 'rgba(239,68,68,0.12)' :
-                        color==='success'? 'rgba(16,185,129,0.12)' :
-                                           'rgba(59,130,246,0.12)';
-  el.style.border = '1px solid ' + (
-    color==='error'  ? 'rgba(239,68,68,0.3)'   :
-    color==='success'? 'rgba(16,185,129,0.3)'  :
-                       'rgba(59,130,246,0.3)');
-  el.style.color = color==='error' ? '#fca5a5' : color==='success' ? '#6ee7b7' : '#93c5fd';
-  el.textContent = msg;
-}
-
-function _hkAuthSetLoading(loading){
-  var btn = document.getElementById('wsAuthBtn');
-  if(!btn) return;
-  if(loading){
-    btn.disabled = true;
-    btn.textContent = '⏳ Please wait…';
-    btn.style.opacity = '0.7';
-  } else {
-    btn.disabled = false;
-    btn.style.opacity = '1';
-    btn.textContent = _authTab === 'signin' ? '🔑 Sign In' : '✨ Create Account';
-  }
-}
-
-/* ══════════════════════════
-   6. SIGN IN / SIGN UP / FORGOT
-══════════════════════════ */
-window.hkAuthSubmit = async function(){
-  var sb = _getClient();
-  if(!sb){ _hkAuthSetMsg('❌ Auth service unavailable — please reload.','error'); return; }
-
-  var email    = (document.getElementById('wsAuthEmail')   || {value:''}).value.trim();
-  var password = (document.getElementById('wsAuthPassword')|| {value:''}).value;
-
-  if(!email)   { _hkAuthSetMsg('⚠️ Please enter your email address.','error'); return; }
-  if(!password){ _hkAuthSetMsg('⚠️ Please enter your password.','error'); return; }
-  if(!/\S+@\S+\.\S+/.test(email)){ _hkAuthSetMsg('⚠️ Please enter a valid email.','error'); return; }
-
-  _hkAuthSetLoading(true);
-  _hkAuthSetMsg('','');
-
-  if(_authTab === 'signin'){
-    /* ── Sign In ── */
-    var result = await sb.auth.signInWithPassword({ email: email, password: password });
-    _hkAuthSetLoading(false);
-    if(result.error){
-      var msg = result.error.message || 'Sign in failed';
-      if(msg.toLowerCase().includes('invalid')) msg = '❌ Incorrect email or password.';
-      else if(msg.toLowerCase().includes('email not confirmed')) msg = '📧 Please confirm your email first — check your inbox.';
-      _hkAuthSetMsg(msg,'error');
-      return;
-    }
-    _setSession(result.data.session);
-    _onAuthSuccess(result.data.session);
-
-  } else {
-    /* ── Sign Up ── */
-    var confirm  = (document.getElementById('wsAuthConfirm')|| {value:''}).value;
-    var dispName = (document.getElementById('wsAuthName')   || {value:''}).value.trim() || email.split('@')[0];
-
-    if(password.length < 8){ _hkAuthSetMsg('⚠️ Password must be at least 8 characters.','error'); return; }
-    if(password !== confirm){ _hkAuthSetMsg('⚠️ Passwords do not match.','error'); return; }
-
-    var signUpResult = await sb.auth.signUp({
-      email: email,
-      password: password,
-      options: { data: { display_name: dispName } }
-    });
-    _hkAuthSetLoading(false);
-    if(signUpResult.error){
-      var errMsg = signUpResult.error.message || 'Sign up failed';
-      if(errMsg.toLowerCase().includes('already registered')) errMsg = '⚠️ This email is already registered. Please sign in.';
-      _hkAuthSetMsg(errMsg,'error');
-      return;
-    }
-    /* Check if email confirmation is required */
-    if(signUpResult.data.session){
-      /* Auto-confirmed (e.g. email confirmations disabled in Supabase) */
-      _setSession(signUpResult.data.session);
-      _onAuthSuccess(signUpResult.data.session, dispName);
-    } else {
-      _hkAuthSetMsg('✅ Account created! Check your email for a confirmation link, then sign in.','success');
-      /* Switch to sign-in tab after 3 s */
-      setTimeout(function(){ window.hkAuthShowTab('signin'); }, 3000);
-    }
-  }
-};
-
-/* ── Forgot password ── */
-window.hkAuthForgotPassword = async function(){
-  var sb = _getClient();
-  if(!sb){ _hkAuthSetMsg('❌ Auth service unavailable.','error'); return; }
-  var email = (document.getElementById('wsAuthEmail')||{value:''}).value.trim();
-  if(!email){ _hkAuthSetMsg('⚠️ Enter your email address above first.','error'); return; }
-  _hkAuthSetMsg('⏳ Sending recovery email…','info');
-  var result = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: window.location.href.split('?')[0].split('#')[0]
-  });
-  if(result.error){
-    _hkAuthSetMsg('❌ ' + result.error.message,'error');
-  } else {
-    _hkAuthSetMsg('📧 Recovery email sent to ' + email + '! Check your inbox and click the link to reset your password.','success');
-  }
-};
-
-/* ── Sign Out ── */
-window.hkAuthSignOut = async function(){
-  var sb = _getClient();
-  /* Stop all pending syncs immediately */
-  window.hkAuthReady = false;
-  /* Clear biometric auto-unlock flag for this user */
-  if(_currentUser) localStorage.removeItem(_bioAutoKey(_currentUser.id));
-  if(sb) await sb.auth.signOut();
-  _setSession(null);
-  _clearUserState();
-  /* Go back to welcome screen */
-  _showWelcomeAuth();
-  /* Update sidebar */
-  _updateSidebarUser(null);
-  /* Clear sync layer uid */
-  window.hkAuthSession = null;
-  window.hkAuthUser    = null;
-};
-
-/* ══════════════════════════
-   7. ON AUTH SUCCESS
-   Called after successful sign-in or sign-up
-══════════════════════════ */
-function _onAuthSuccess(session, overrideName){
-  _setSession(session);
-  var user = session.user;
-  var dispName = overrideName
-    || (user.user_metadata && user.user_metadata.display_name)
-    || user.email.split('@')[0];
-
-  /* 1. Load user-scoped state */
-  _loadUserState(user.id);
-
-  /* 2. Update sync layer to use auth token + user.id */
-  _patchSyncLayer();
-
-  /* 3. Set username in state */
-  if(window.state && window.state.settings){
-    window.state.settings.userName = dispName;
-    if(typeof window.saveState === 'function') window.saveState();
-  }
-
-  /* 4. Update sidebar */
-  _updateSidebarUser(user, dispName);
-
-  /* 5. Unlock Supabase sync — now that we have a valid auth session */
-  window.hkAuthReady = true;
-
-  /* 6. Check biometric auto-unlock */
-  var bioAutoKey = _bioAutoKey(user.id);
-  var shouldAutoBio = localStorage.getItem(bioAutoKey) === '1';
-  if(shouldAutoBio){
-    _tryBiometricAutoUnlock(user, dispName);
-  } else {
-    _enterDashboardAfterAuth(user, dispName);
-  }
-}
-
-function _enterDashboardAfterAuth(user, dispName){
-  /* Check if user has a PIN set (per-user) */
-  var hasPinForUser = !!localStorage.getItem(_pinKey(user.id));
-  if(hasPinForUser){
-    /* Override PIN lock functions to use per-user keys */
-    _patchPinFunctionsForUser(user.id);
-    if(typeof window.showPinLock === 'function'){
-      window.showPinLock(function(){
-        _finishDashboardEntry(dispName);
-      });
-      return;
-    }
-  }
-  _finishDashboardEntry(dispName);
-}
-
-function _finishDashboardEntry(dispName){
-  /* Hide welcome screen */
-  var ws = document.getElementById('welcomeScreen');
-  if(ws){ ws.classList.remove('ws-visible'); ws.classList.add('ws-hidden'); setTimeout(function(){ ws.classList.add('ws-gone'); ws.classList.remove('ws-hidden'); },600); }
-
-  /* Update dashboard greeting */
-  if(typeof window.updateDashboardGreeting==='function') window.updateDashboardGreeting(dispName);
-  setTimeout(function(){ if(typeof window.showWelcomeToast==='function') window.showWelcomeToast(dispName); },300);
-
-  /* Initial data pull from Supabase (loads user's cloud data) */
-  setTimeout(function(){
-    try { if(typeof window.hkSbPull === 'function') window.hkSbPull(false); } catch(e){}
-    try { if(typeof window._hkUnifiedSync === 'function') window._hkUnifiedSync(); } catch(e){}
-  }, 800);
-
-  /* Show onboarding if brand-new user */
-  if(window.state && !window.state.settings.onboardingDone && !window.state.settings.income){
-    setTimeout(function(){ if(typeof window.showOnboarding==='function') window.showOnboarding(); },1400);
-  }
-}
-
-/* ══════════════════════════
-   8. PER-USER PIN PATCH
-══════════════════════════ */
-function _patchPinFunctionsForUser(uid){
-  /* Make PIN functions use per-user keys */
-  window.pinIsSet  = function(){ return !!localStorage.getItem(_pinKey(uid)); };
-  window.encIsEnabled = function(){ return !!localStorage.getItem(_encKey(uid)); };
-}
-
-/* ══════════════════════════
-   9. PER-USER BIOMETRIC (WebAuthn)
-══════════════════════════ */
-
-/** Per-user biometric key in localStorage */
-function _bioCredKey(uid){ return _bioKey(uid); }
-
-/** Register biometric for current logged-in user */
-window.hkBiometricRegister = async function(){
-  if(!_currentUser){ showToastMsg('❌ Sign in first to register biometrics.','danger'); return false; }
-  if(!window.PublicKeyCredential){ showToastMsg('❌ WebAuthn not supported in this browser.','danger'); return false; }
-  var avail = false;
-  try { avail = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable(); } catch(e){}
-  if(!avail){ showToastMsg('❌ No biometric sensor found on this device.','danger'); return false; }
-
-  try {
-    var challenge = crypto.getRandomValues(new Uint8Array(32));
-    var uidBytes  = new TextEncoder().encode(_currentUser.id.replace(/-/g,'').slice(0,16).padEnd(16,'0'));
-
-    var cred = await navigator.credentials.create({
-      publicKey: {
-        challenge: challenge,
-        rp: { name: 'HisabKitab', id: location.hostname || 'localhost' },
-        user: {
-          id: uidBytes,
-          name: _currentUser.email,
-          displayName: (window.state && window.state.settings && window.state.settings.userName) || _currentUser.email
-        },
-        pubKeyCredParams: [
-          { alg: -7,   type: 'public-key' },  /* ES256 */
-          { alg: -257, type: 'public-key' }   /* RS256 */
-        ],
-        authenticatorSelection: {
-          authenticatorAttachment: 'platform',
-          userVerification: 'required',
-          residentKey: 'discouraged'
-        },
-        timeout: 60000
-      }
-    });
-
-    var credId = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
-    localStorage.setItem(_bioCredKey(_currentUser.id), credId);
-    /* Enable auto-biometric on next sign-in */
-    localStorage.setItem(_bioAutoKey(_currentUser.id), '1');
-    showToastMsg('✅ Biometric registered! Auto-unlock enabled for your account.','success');
-    if(typeof window.updateSecurityUI === 'function') window.updateSecurityUI();
-    return true;
-
-  } catch(e) {
-    if(e.name !== 'NotAllowedError') console.warn('[WebAuthn] Register error:', e);
-    showToastMsg('⚠️ Biometric registration cancelled','info');
-    return false;
-  }
-};
-
-/** Verify biometric for current user */
-window.hkBiometricUnlock = async function(){
-  if(!_currentUser){ showToastMsg('❌ No active session.','danger'); return; }
-  var storedId = localStorage.getItem(_bioCredKey(_currentUser.id));
-  if(!storedId){ showToastMsg('⚠️ No biometric registered. Set it up in Settings → Security.','info'); return; }
-  var avail = false;
-  try { avail = await (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){}
-  if(!avail){ showToastMsg('❌ Biometric sensor not available.','danger'); return; }
-
-  try {
-    var challenge = crypto.getRandomValues(new Uint8Array(32));
-    var rawId = Uint8Array.from(atob(storedId), function(c){ return c.charCodeAt(0); });
-
-    var assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge: challenge,
-        allowCredentials: [{ id: rawId, type: 'public-key' }],
-        userVerification: 'required',
-        timeout: 60000
-      }
-    });
-
-    if(assertion){
-      showToastMsg('✅ Biometric verified','success');
-      if(typeof window.hidePinLock === 'function') window.hidePinLock();
-      if(typeof window._pinSuccessCallback === 'function'){
-        window._pinSuccessCallback();
-        window._pinSuccessCallback = null;
-      }
-    }
-  } catch(e) {
-    if(e.name === 'NotAllowedError'){
-      showToastMsg('❌ Biometric not recognised. Use PIN instead.','danger');
-    } else {
-      console.warn('[WebAuthn] Assert error:', e);
-      showToastMsg('⚠️ Biometric error — use PIN instead.','warning');
-    }
-  }
-};
-
-/** Remove biometric for current user */
-window.hkBiometricRemove = function(){
-  if(!_currentUser){ showToastMsg('❌ No active session.','danger'); return; }
-  localStorage.removeItem(_bioCredKey(_currentUser.id));
-  localStorage.removeItem(_bioAutoKey(_currentUser.id));
-  showToastMsg('🗑 Biometric removed','info');
-  if(typeof window.updateSecurityUI === 'function') window.updateSecurityUI();
-};
-
-/** Check if biometric registered for current user */
-window.hkBiometricIsRegistered = function(){
-  if(!_currentUser) return false;
-  return !!localStorage.getItem(_bioCredKey(_currentUser.id));
-};
-
-/** Show biometric button on PIN screen if credential exists for this user */
-window._showBiometricBtnIfAvail = async function(){
-  var btn = document.getElementById('biometricBtn');
-  if(!btn) return;
-  if(!_currentUser){ btn.style.display='none'; return; }
-  var hasReg = !!localStorage.getItem(_bioCredKey(_currentUser.id));
-  var avail = false;
-  try { avail = await (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){}
-  btn.style.display = (hasReg && avail) ? 'flex' : 'none';
-};
-
-/** Update Security UI to reflect per-user biometric state */
-var _origUpdateSecurityUI = window.updateSecurityUI;
-window.updateSecurityUI = function(){
-  if(typeof _origUpdateSecurityUI === 'function') _origUpdateSecurityUI();
-  if(!_currentUser) return;
-  var bioReg = window.hkBiometricIsRegistered();
-  var regBtn = document.getElementById('btnRegBiometric');
-  var remBtn = document.getElementById('btnRemoveBiometric');
-  var bioRow = document.getElementById('biometricRow');
-  if(regBtn) regBtn.style.display = bioReg ? 'none' : '';
-  if(remBtn) remBtn.style.display = bioReg ? '' : 'none';
-  if(bioRow){
-    (window.PublicKeyCredential
-      ? PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
-      : Promise.resolve(false)
-    ).then(function(avail){ bioRow.style.display = avail ? '' : 'none'; });
-  }
-};
-
-/** Auto biometric unlock (called right after successful password sign-in) */
-async function _tryBiometricAutoUnlock(user, dispName){
-  var storedId = localStorage.getItem(_bioCredKey(user.id));
-  if(!storedId){ _enterDashboardAfterAuth(user, dispName); return; }
-  var avail = false;
-  try { avail = await (window.PublicKeyCredential && PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){}
-  if(!avail){ _enterDashboardAfterAuth(user, dispName); return; }
-
-  try {
-    var challenge = crypto.getRandomValues(new Uint8Array(32));
-    var rawId = Uint8Array.from(atob(storedId), function(c){ return c.charCodeAt(0); });
-    var assertion = await navigator.credentials.get({
-      publicKey: {
-        challenge: challenge,
-        allowCredentials: [{ id: rawId, type: 'public-key' }],
-        userVerification: 'required',
-        timeout: 30000
-      }
-    });
-    if(assertion){
-      showToastMsg('✅ Biometric verified — welcome back!','success');
-      _enterDashboardAfterAuth(user, dispName);
-    }
-  } catch(e){
-    /* Biometric failed or cancelled — fall through to normal entry */
-    _enterDashboardAfterAuth(user, dispName);
-  }
-}
-
-/* ══════════════════════════
-   10. SIDEBAR USER STRIP
-══════════════════════════ */
-function _updateSidebarUser(user, dispName){
-  var strip = document.getElementById('sidebarUserStrip');
-  var avatar= document.getElementById('sbUserAvatar');
-  var nameEl= document.getElementById('sbUserName');
-  var emailEl=document.getElementById('sbUserEmail');
-  if(!strip) return;
-  if(!user){ strip.style.display='none'; return; }
-  strip.style.display='block';
-  var name = dispName || (user.user_metadata && user.user_metadata.display_name) || user.email.split('@')[0];
-  var initials = name.slice(0,2).toUpperCase();
-  if(avatar)  avatar.textContent = initials;
-  if(nameEl)  nameEl.textContent = name;
-  if(emailEl) emailEl.textContent = user.email;
-}
-
-/* ══════════════════════════
-   11. SHOW WELCOME AUTH SCREEN
-══════════════════════════ */
-function _showWelcomeAuth(){
-  /* Show welcome screen */
-  var ws = document.getElementById('welcomeScreen');
-  if(ws){ ws.classList.remove('ws-gone','ws-hidden'); ws.classList.add('ws-visible'); }
-  /* Reset to sign-in tab */
-  window.hkAuthShowTab('signin');
-  /* Clear fields */
-  var emailEl = document.getElementById('wsAuthEmail');
-  var pwdEl   = document.getElementById('wsAuthPassword');
-  var confEl  = document.getElementById('wsAuthConfirm');
-  if(emailEl) emailEl.value = '';
-  if(pwdEl)   pwdEl.value   = '';
-  if(confEl)  confEl.value  = '';
-  _hkAuthSetMsg('','');
-  /* Refresh particles / dates */
-  if(typeof window.createParticles === 'function') window.createParticles();
-  try {
-    var now = new Date();
-    if(typeof window.gregorianToHijri === 'function'){
-      var hj = window.gregorianToHijri(now.getFullYear(),now.getMonth()+1,now.getDate());
-      var hijriEl = document.getElementById('wsHijriPreview');
-      if(hijriEl && window.HIJRI_MONTHS) hijriEl.textContent = hj.day+' '+window.HIJRI_MONTHS[hj.month-1]+' '+hj.year+' AH';
-    }
-    var gregEl = document.getElementById('wsGregorianPreview');
-    if(gregEl) gregEl.textContent = now.toLocaleDateString('en-PK',{weekday:'short',day:'numeric',month:'long',year:'numeric'});
-  } catch(e){}
-  /* Focus email */
-  setTimeout(function(){ var e=document.getElementById('wsAuthEmail'); if(e) e.focus(); },300);
-}
-
-/* ══════════════════════════
-   12. PASSWORD RESET HANDLER
-   When user clicks the link in the recovery email,
-   Supabase redirects back with type=recovery in the URL hash
-══════════════════════════ */
-async function _handlePasswordRecovery(){
-  var sb = _getClient();
-  if(!sb) return false;
-  /* supabase-js v2 fires SIGNED_IN with type=recovery automatically.
-     We intercept it via onAuthStateChange below. */
-  return false;
-}
-
-/* ══════════════════════════
-   13. PASSWORD UPDATE UI
-   Shown when user lands back after clicking recovery link
-══════════════════════════ */
-function _showPasswordUpdateModal(){
-  /* Remove any existing modal first */
-  var existing = document.getElementById('hkPasswordResetModal');
-  if(existing) existing.remove();
-
-  var modal = document.createElement('div');
-  modal.id = 'hkPasswordResetModal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:99998;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:flex;align-items:center;justify-content:center;padding:20px;';
-  modal.innerHTML = '<div style="background:var(--surface,#0e1525);border:1px solid rgba(80,120,255,0.2);border-radius:20px;padding:32px;width:100%;max-width:400px;box-shadow:0 24px 64px rgba(0,0,0,0.65);">'
-    + '<div style="font-size:22px;font-weight:800;margin-bottom:6px;color:var(--text,#dde8ff)">🔑 Set New Password</div>'
-    + '<div style="font-size:13px;color:var(--text2,#7a9acc);margin-bottom:24px;">Enter a new password for your account.</div>'
-    + '<div id="hkPwdResetMsg" style="display:none;margin-bottom:14px;padding:10px 14px;border-radius:10px;font-size:13px;"></div>'
-    + '<div style="margin-bottom:14px;position:relative;">'
-    +   '<label style="font-size:11px;font-weight:700;color:var(--text2,#7a9acc);display:block;margin-bottom:6px;">New Password</label>'
-    +   '<input id="hkNewPwd1" type="password" placeholder="Min. 8 characters" autocomplete="new-password" style="width:100%;padding:11px 42px 11px 14px;background:rgba(10,16,36,0.75);border:1px solid rgba(80,120,255,0.18);border-radius:10px;color:var(--text,#dde8ff);font-size:13px;outline:none;box-sizing:border-box;">'
-    +   '<button onclick="hkAuthTogglePwd(\'hkNewPwd1\',this)" type="button" style="position:absolute;right:10px;bottom:10px;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:15px;">👁</button>'
-    + '</div>'
-    + '<div style="margin-bottom:20px;position:relative;">'
-    +   '<label style="font-size:11px;font-weight:700;color:var(--text2,#7a9acc);display:block;margin-bottom:6px;">Confirm Password</label>'
-    +   '<input id="hkNewPwd2" type="password" placeholder="Re-enter password" autocomplete="new-password" style="width:100%;padding:11px 42px 11px 14px;background:rgba(10,16,36,0.75);border:1px solid rgba(80,120,255,0.18);border-radius:10px;color:var(--text,#dde8ff);font-size:13px;outline:none;box-sizing:border-box;">'
-    +   '<button onclick="hkAuthTogglePwd(\'hkNewPwd2\',this)" type="button" style="position:absolute;right:10px;bottom:10px;background:none;border:none;color:rgba(255,255,255,0.4);cursor:pointer;font-size:15px;">👁</button>'
-    + '</div>'
-    + '<button id="hkPwdResetSubmitBtn" onclick="hkUpdatePassword()" style="width:100%;padding:13px;background:linear-gradient(135deg,#4f8fff,#7c5cfc);border:none;border-radius:12px;color:#fff;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:10px;">🔒 Update Password</button>'
-    + '<div style="text-align:center;font-size:12px;color:rgba(255,255,255,0.35);">You will be signed in after updating.</div>'
-    + '</div>';
-
-  document.body.appendChild(modal);
-}
-
-window.hkUpdatePassword = async function(){
-  var sb = _getClient();
-  if(!sb) return;
-  var p1 = (document.getElementById('hkNewPwd1')||{value:''}).value;
-  var p2 = (document.getElementById('hkNewPwd2')||{value:''}).value;
-  var msgEl = document.getElementById('hkPwdResetMsg');
-  var btn   = document.getElementById('hkPwdResetSubmitBtn');
-
-  function _setModalMsg(msg, isError){
-    if(!msgEl) return;
-    msgEl.style.display = msg ? 'block' : 'none';
-    msgEl.style.background = isError ? 'rgba(239,68,68,0.12)' : 'rgba(16,185,129,0.12)';
-    msgEl.style.border = '1px solid ' + (isError ? 'rgba(239,68,68,0.3)' : 'rgba(16,185,129,0.3)');
-    msgEl.style.color = isError ? '#fca5a5' : '#6ee7b7';
-    msgEl.textContent = msg;
-  }
-
-  if(p1.length < 8){ _setModalMsg('⚠️ Password must be at least 8 characters.', true); return; }
-  if(p1 !== p2)    { _setModalMsg('⚠️ Passwords do not match.', true); return; }
-
-  if(btn){ btn.disabled=true; btn.textContent='⏳ Updating…'; }
-  var result = await sb.auth.updateUser({ password: p1 });
-  if(btn){ btn.disabled=false; btn.textContent='🔒 Update Password'; }
-
-  if(result.error){
-    _setModalMsg('❌ ' + result.error.message, true);
-    return;
-  }
-
-  _setModalMsg('✅ Password updated successfully!', false);
-  /* Close modal after 2 s and proceed to dashboard */
-  setTimeout(function(){
-    var m = document.getElementById('hkPasswordResetModal');
-    if(m) m.remove();
-    /* session should already be set by onAuthStateChange */
-    if(_currentSession){
-      var user = _currentSession.user;
-      var dispName = (user.user_metadata && user.user_metadata.display_name) || user.email.split('@')[0];
-      _loadUserState(user.id);
-      _patchSyncLayer();
-      _updateSidebarUser(user, dispName);
-      _finishDashboardEntry(dispName);
-    }
-  }, 2000);
-};
-
-/* ══════════════════════════
-   14. AUTH STATE LISTENER
-   Central auth state management
-══════════════════════════ */
-function _initAuthListener(){
-  var sb = _getClient();
-  if(!sb) return;
-
-  sb.auth.onAuthStateChange(function(event, session){
-    console.log('[HK Auth] event:', event);
-
-    if(event === 'PASSWORD_RECOVERY'){
-      /* User clicked the reset link — show password update UI */
-      _setSession(session);
-      _showPasswordUpdateModal();
-      return;
-    }
-
-    if(event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED'){
-      if(session && session.user){
-        _setSession(session);
-        /* Only auto-enter dashboard if we just came back from a refresh
-           (not a fresh page load which is handled by _checkInitialSession) */
-        if(event === 'TOKEN_REFRESHED'){
-          _patchSyncLayer();
-          window.hkAuthUser = session.user;
-        }
-      }
-      return;
-    }
-
-    if(event === 'SIGNED_OUT'){
-      _setSession(null);
-      return;
-    }
-  });
-}
-
-/* ══════════════════════════
-   15. INITIAL SESSION CHECK
-   Runs on page load — either restore session or show auth
-══════════════════════════ */
-async function _checkInitialSession(){
-  var sb = _getClient();
-  if(!sb){
-    console.warn('[HK Auth] Supabase client not ready');
-    _showWelcomeAuth();
-    return;
-  }
-
-  var result = await sb.auth.getSession();
-  var session = result.data && result.data.session;
-
-  if(session && session.user){
-    /* Existing valid session — auto-enter */
-    _setSession(session);
-    var user = session.user;
-    var dispName = (user.user_metadata && user.user_metadata.display_name) || user.email.split('@')[0];
-
-    _loadUserState(user.id);
-    _patchSyncLayer();
-    _updateSidebarUser(user, dispName);
-
-    /* Unlock sync now that we have a confirmed session */
-    window.hkAuthReady = true;
-
-    /* Check if this was a password-recovery redirect */
-    var hash = window.location.hash || '';
-    if(hash.includes('type=recovery')){
-      _showPasswordUpdateModal();
-      return;
-    }
-
-    /* Normal session restore — skip welcome screen */
-    _finishDashboardEntry(dispName);
-
-  } else {
-    /* No session — show welcome/auth screen */
-    _showWelcomeAuth();
-  }
-}
-
-/* ══════════════════════════
-   16. OVERRIDE legacy enterDashboard
-   Prevent old no-auth enterDashboard from being called
-══════════════════════════ */
-window.enterDashboard = function(){
-  /* Silently redirect to auth submit */
-  window.hkAuthSubmit();
-};
-window.checkWelcomeScreen = function(){
-  /* Override — session check handles this now */
-};
-window.goToWelcomeScreen = function(){
-  window.hkAuthSignOut();
-};
-
-/* ══════════════════════════
-   17. BOOT
-══════════════════════════ */
-document.addEventListener('DOMContentLoaded', function(){
-  /* Init Supabase auth listener first */
-  _initAuthListener();
-  /* Then check for existing session */
-  _checkInitialSession();
-});
-
-/* Expose for external use */
-window.hkGetCurrentUser    = function(){ return _currentUser; };
-window.hkGetCurrentSession = function(){ return _currentSession; };
-window.hkAuthShowWelcome   = _showWelcomeAuth;
-
-})();
-</script>
-
-<!-- ═══════════════════════════════════════════════════
-     UPDATED SQL SCHEMA — run this in Supabase SQL Editor
-     to replace the old schema with proper per-user RLS
-═══════════════════════════════════════════════════════
-PASTE THIS IN: Supabase → SQL Editor → New Query → Run
-
--- Enable UUID extension
-create extension if not exists "uuid-ossp";
-
--- Drop old open-anon policies and recreate with auth.uid() RLS
-
--- hk_settings
-alter table if exists hk_settings add column if not exists auth_uid uuid;
-drop policy if exists "hk_settings_anon_all" on hk_settings;
-create policy "hk_settings_auth" on hk_settings
-  for all using (auth_uid = auth.uid()) with check (auth_uid = auth.uid());
-
--- Repeat pattern for all other tables (hk_expenses, hk_emis, etc.)
--- See full updated schema at: Supabase Settings > cloud sync panel in app
-═══════════════════════════════════════════════════ -->
-
 </body>
 </html>
